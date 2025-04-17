@@ -8,7 +8,7 @@ const client = new QueryClient()
 export function App() {
   return (
     <QueryClientProvider client={client}>
-      <ClusterProvider>
+       <ClusterProvider>
         <SolanaProvider>
           <AppRoutes />
         </SolanaProvider>
