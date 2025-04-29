@@ -8,63 +8,10 @@ declare_id!("coUnmi3oBUtwtd9fjeAvSsJssXh5A5xyPbhpewyzRVF");
 pub mod QuickSwap {
     use super::*;
 
-  pub fn close(_ctx: Context<CloseQuickSwap>) -> Result<()> {
-    Ok(())
-  }
+    pub fn initialize()-> Result<()>{
 
-  pub fn decrement(ctx: Context<Update>) -> Result<()> {
-    ctx.accounts.QuickSwap.count = ctx.accounts.QuickSwap.count.checked_sub(1).unwrap();
-    Ok(())
-  }
+     Ok(())
+    }
 
-  pub fn increment(ctx: Context<Update>) -> Result<()> {
-    ctx.accounts.QuickSwap.count = ctx.accounts.QuickSwap.count.checked_add(1).unwrap();
-    Ok(())
-  }
-
-  pub fn initialize(_ctx: Context<InitializeQuickSwap>) -> Result<()> {
-    Ok(())
-  }
-
-  pub fn set(ctx: Context<Update>, value: u8) -> Result<()> {
-    ctx.accounts.QuickSwap.count = value.clone();
-    Ok(())
-  }
-}
-
-#[derive(Accounts)]
-pub struct InitializeQuickSwap<'info> {
-  #[account(mut)]
-  pub payer: Signer<'info>,
-
-  #[account(
-  init,
-  space = 8 + QuickSwap::INIT_SPACE,
-  payer = payer
-  )]
-  pub QuickSwap: Account<'info, QuickSwap>,
-  pub system_program: Program<'info, System>,
-}
-#[derive(Accounts)]
-pub struct CloseQuickSwap<'info> {
-  #[account(mut)]
-  pub payer: Signer<'info>,
-
-  #[account(
-  mut,
-  close = payer, // close account and return lamports to payer
-  )]
-  pub QuickSwap: Account<'info, QuickSwap>,
-}
-
-#[derive(Accounts)]
-pub struct Update<'info> {
-  #[account(mut)]
-  pub QuickSwap: Account<'info, QuickSwap>,
-}
-
-#[account]
-#[derive(InitSpace)]
-pub struct QuickSwap {
-  count: u8,
-}
+ 
+  };
