@@ -11,7 +11,5 @@ pub struct Marketplace{
 
     pub bump: u8,
 
-    pub rewards_bump:u8,
-
     pub treasury_bump: u8,
 }
