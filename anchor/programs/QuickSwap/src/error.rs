@@ -1,7 +1,7 @@
-use anchor_lang::prelude::*;
+use anchor_lang::error_code;
 
 #[error_code]
-pub enum ListErrorCode {
+pub enum ListError {
     #[msg("Insufficient funds to purchase asset")]
     InsufficientFunds,
     #[msg("Invalid operation!")]

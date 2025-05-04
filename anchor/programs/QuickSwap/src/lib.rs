@@ -8,7 +8,7 @@ declare_id!("coUnmi3oBUtwtd9fjeAvSsJssXh5A5xyPbhpewyzRVF");
 pub mod QuickSwap {
     use super::*;
 
-    pub fn initialize()-> Result<()>{
+    pub fn initialize()-> Result<()> {
 
      Ok(())
     }

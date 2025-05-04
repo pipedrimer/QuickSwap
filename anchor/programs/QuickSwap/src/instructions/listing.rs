@@ -8,8 +8,9 @@ use anchor_spl::{
 };
 
 use crate::state::{Listing,Marketplace};
+use crate::error::ListingError;
 #[derive(Accounts)]
-#[instruction(seed:u64)]
+#[instruction(seed:u64, sol_offered: u64)]
 pub struct Listing<'info>{
     #[account(mut)]
     pub maker: Signer<'info>,
@@ -42,6 +43,16 @@ pub struct Listing<'info>{
     pub vault: InterfaceAccount<'info, TokenAccount>,
 
     pub collection_mint: InterfaceAccount< 'info, Mint>,
+    
+    #[account(
+        seeds = [b"solvault", listing.key().as_ref()],
+        bump,
+        optional,
+        constraint = sol_vault.is_some() || sol_offered == 0 @ Error::SolVaultRequired
+    )]
+    pub sol_vault: Option<SystemAccount<'info>>,
+
+    #[account]
 
     #[account(
         seeds= [b"metadata", maker_mint.key().as_ref(), metadata_program.key().as_ref()],
@@ -127,21 +138,46 @@ impl <'info> Listing <'info> {
                 ListingError::WrongCollection
             );
     
-            // Transfer NFT
+          
             let cpi_ctx = CpiContext::new(
                 ctx.accounts.token_program.to_account_info(),
                 TransferChecked {
                     from: maker_ata_info.to_account_info(),
                     to: vault_ata_info.to_account_info(),
                     authority: ctx.accounts.maker.to_account_info(),
+                    mint:mint_info.to_account_info(),
                 },
             );
     
             transfer_checked(cpi_ctx, 1, 0)?;
             listing.nft_mint.push(mint_info.key());
+
+
+           
         }
     
         Ok(())
+    }
+
+    pub fn deposit_sol(ctx: Context<Listing>, )->Result<()>{
+
+        let listing = &mut ctx.accounts.listing;
+
+       if listing.sol_offered > 0 {
+        
+           let cpi_program = ctx.accounts.system_program.to_account_info();
+
+           let cpi_accounts = Transfer{
+            from: ctx.accounts.maker.to_account_info(),
+            to: ctx.accounts.sol_vault.to_account_info(),
+
+           };
+
+          let  cpi_ctx= CpiContext::new(cpi_program, cpi_accounts);
+
+          transfer( cpi_ctx, listing.sol_offered)
+
+       }
     }
 }
     
