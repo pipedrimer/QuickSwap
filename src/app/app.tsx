@@ -12,4 +12,6 @@ export function App() {
       </QueryClientProvider>
     </WalletContext>
   )
+
+
 }
