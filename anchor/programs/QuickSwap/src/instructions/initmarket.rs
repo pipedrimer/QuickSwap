@@ -1,7 +1,7 @@
+use anchor_lang::prelude::*;
 
 
-
-use crate::state::initmarket; 
+use crate::state::Marketplace; 
 
 
 #[derive(Accounts)]
@@ -15,7 +15,7 @@ pub struct InitializeMarket <'info>{
 
  pub marketplace: Account <'info, Marketplace>,
 
- #[account(seeds= [b"treasury", marketplace.key().as_ref], bump)]
+ #[account(seeds= [b"treasury", marketplace.key().as_ref()], bump)]
 
  pub treasury: SystemAccount<'info>,
 
@@ -25,7 +25,7 @@ pub struct InitializeMarket <'info>{
 
 impl <'info> InitializeMarket  <'info> {
 
-    pub fn initmarket(&mut self, fee:u8, bumps:&InitializeBumps)-> Result<()>{
+    pub fn initmarket(&mut self, fee:u8, bumps:&InitializeMarketBumps)-> Result<()>{
 
         self.marketplace.set_inner(Marketplace{
             admin: self.admin.key(),

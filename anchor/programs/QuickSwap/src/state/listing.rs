@@ -11,9 +11,10 @@ pub struct Listing{
     pub nft_mint: Vec<Pubkey>,
     #[max_len(100)]
     pub collection_requested: Vec<Pubkey>,
-    pub sol_offered:u64,
-    pub sol_demanded:u64,
-    pub bump:u8
+    pub sol_deposit:u64,
+    pub sol_demand:u64,
+    pub bump:u8,
+    
 
 
 }
