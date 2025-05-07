@@ -1,4 +1,4 @@
-use anchor_lang::prelude::*;
+use anchor_lang::{prelude::*,system_program::{transfer, Transfer}, AccountDeserialize};
 
 use anchor_spl::{
     associated_token::AssociatedToken,
@@ -10,8 +10,8 @@ use anchor_spl::{
 use crate::state::{Listing, Marketplace};
 use crate::error::ListError;
 #[derive(Accounts)]
-#[instruction(seed:u64, sol_deposit: u64)]
-pub struct List<'info>{
+#[instruction(seed:u64)]
+pub struct List<'info> {
     #[account(mut)]
     pub maker: Signer<'info>,
     
@@ -46,11 +46,9 @@ pub struct List<'info>{
     
     #[account(
         seeds = [b"solvault", listing.key().as_ref()],
-        bump,
-        optional,
-        constraint = sol_vault.is_some() || sol_deposit == 0
+        bump
     )]
-    pub sol_vault: Option<SystemAccount<'info>>,
+    pub sol_vault: SystemAccount<'info>,
 
     
     #[account(
@@ -84,30 +82,26 @@ pub struct List<'info>{
 
 }
 
-impl <'info> List <'info> {
 
-    pub fn create_listing(mut self,
-        accounts: &[AccountInfo<'info>],
+pub fn create_listing(ctx:Context<List>,
         seed: u64,
         collection_requested: Vec<Pubkey>,
         sol_deposit: u64,
         sol_demand: u64,
-        bumps:&ListBumps,
     ) -> Result<()> {
        
+        let listing = &mut ctx.accounts.listing;
 
-        self.listing.set_inner({Listing{
-            maker: self.maker.key(),
-            seed,
-            sol_deposit,
-            sol_demand,
-            bump:bumps.listing,
-            collection_requested:collection_requested.clone(),
-            nft_mint: vec![]
-        }});
+        listing.maker = ctx.accounts.maker.key();
+        listing.seed = seed;
+        listing.sol_deposit= sol_deposit;
+        listing.sol_demand = sol_demand;
+        listing.bump= ctx.bumps.listing;
+        listing.collection_requested= collection_requested.clone();
+        listing.nft_mint= vec![];
         
 
-
+       let remaining = &ctx.remaining_accounts;
         require!(remaining.len() % 5 == 0, ListError::InvalidNFTAccountLayout);
         let nft_count = remaining.len() / 5;
         require!(nft_count <= 3, ListError::TooManyNFTs);
@@ -119,19 +113,21 @@ impl <'info> List <'info> {
             let metadata_info = &remaining[i * 5 + 3];
             let _edition_info = &remaining[i * 5 + 4];
     
-            let mint = Mint::try_from(mint_info)?;
+            let mint = Mint::try_deserialize(&mut &**mint_info.try_borrow_data()?)?;
             require!(mint.decimals == 0, ListError::InvalidMintDecimals);
     
-            let maker_ata = TokenAccount::try_from(maker_ata_info)?;
+            let maker_ata = TokenAccount::try_deserialize(&mut &**maker_ata_info.try_borrow_data()?)?;
             require_keys_eq!(maker_ata.owner, ctx.accounts.maker.key(), ListError::InvalidATAOwner);
             require_keys_eq!(maker_ata.mint, mint_info.key(), ListError::InvalidATAMint);
     
-            let vault = TokenAccount::try_from(vault_ata_info)?;
+            let vault = TokenAccount::try_deserialize(&mut &**vault_ata_info.try_borrow_data()?)?;
             require_keys_eq!(vault.owner, ctx.accounts.listing.key(), ListError::InvalidVaultOwner);
             require_keys_eq!(vault.mint, mint_info.key(), ListError::InvalidVaultMint);
     
-            let metadata = MetadataAccount::try_from(metadata_info)?;
-            let collection = metadata.collection.ok_or(ListError::MissingCollection)?;
+            // let metadata = MetadataAccount::try_from(metadata_info)?;
+
+            let metadata = MetadataAccount::try_deserialize(&mut &**metadata_info.try_borrow_data()?)?;
+            let collection = metadata.collection.as_ref().ok_or(ListError::MissingCollection)?;
             require!(collection.verified, ListError::UnverifiedCollection);
     
             require!(
@@ -149,38 +145,36 @@ impl <'info> List <'info> {
                     mint:mint_info.to_account_info(),
                 },
             );
-    
-            transfer_checked(cpi_ctx, 1, 0)?;
-            self.listing.nft_mint.push(mint_info.key());
+            
+            ctx.accounts.listing.nft_mint.push(mint_info.key());
+            transfer_checked(cpi_ctx, 1, 0);
+           
 
 
            
         }
-    
-        Ok(())
-    }
 
-    pub fn deposit_sol(mut self )->Result<()>{
+        if sol_deposit> 0 {
+            let listing = &ctx.accounts.listing;
 
-        let listing = self.listing;
-
-         if listing.sol_deposit > 0 {
         
-          let cpi_program = self.system_program.to_account_info();
+        
+        let cpi_program = ctx.accounts.system_program.to_account_info();
 
-           let cpi_accounts = Transfer{
+        let cpi_accounts = Transfer{
             from: ctx.accounts.maker.to_account_info(),
             to: ctx.accounts.sol_vault.to_account_info(),
 
            };
 
-          let  cpi_ctx= CpiContext::new(cpi_program, cpi_accounts);
-          transfer( cpi_ctx, listing.sol_deposit)?
+        let  cpi_ctx= CpiContext::new(cpi_program, cpi_accounts);
+
+        transfer( cpi_ctx, listing.sol_deposit);
           
-         };
-         
-      Ok(())
-       
+        }
+    
+        Ok(())
     }
-}
+
+
 
