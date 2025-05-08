@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use anchor_lang::{prelude::*,system_program::{transfer, Transfer}, AccountDeserialize};
+use anchor_lang::{prelude::*,system_program::{transfer, Transfer}};
 
 use anchor_spl::{
     associated_token::AssociatedToken,
@@ -141,7 +141,7 @@ pub fn create_listing(ctx:Context<List>,
 
         let  cpi_ctx= CpiContext::new(cpi_program, cpi_accounts);
 
-        transfer( cpi_ctx, listing.sol_deposit);
+        transfer( cpi_ctx, listing.sol_deposit)?;
           
         }
     
