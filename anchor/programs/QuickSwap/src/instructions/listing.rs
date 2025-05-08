@@ -30,21 +30,21 @@ pub struct List<'info> {
             )]
     pub listing: Account <'info, Listing>,
     
-    pub nft_mint:InterfaceAccount<'info, Mint>,
+    pub maker_mint:InterfaceAccount<'info, Mint>,
     
-    #[account(mut,associated_token::mint=nft_mint,
+    #[account(mut,associated_token::mint=maker_mint,
                   associated_token::authority=maker,
                   associated_token::token_program=token_program,)]
     pub maker_ata:InterfaceAccount<'info, TokenAccount>,
 
     #[account(init,
         payer= maker,
-        associated_token::mint= nft_mint,
+        associated_token::mint= maker_mint,
         associated_token::authority= listing,
         associated_token::token_program = token_program)]
     pub vault: InterfaceAccount<'info, TokenAccount>,
     
-    
+
     pub collection_mint: InterfaceAccount< 'info, Mint>,
     
     #[account(
@@ -55,7 +55,7 @@ pub struct List<'info> {
 
     
     #[account(
-        seeds= [b"metadata", nft_mint.key().as_ref(), metadata_program.key().as_ref()],
+        seeds= [b"metadata", maker_mint.key().as_ref(), metadata_program.key().as_ref()],
         bump,
 
         seeds::program= metadata_program.key(),
@@ -66,7 +66,7 @@ pub struct List<'info> {
     pub metadata: Account<'info, MetadataAccount>,
     #[account(
         seeds=[b"metadata",
-        nft_mint.key().as_ref(), 
+        maker_mint.key().as_ref(), 
         metadata_program.key().as_ref(),
         b"edition"],
         seeds::program = metadata_program.key(),
@@ -101,7 +101,7 @@ pub fn create_listing(ctx:Context<List>,
         listing.sol_demand = sol_demand;
         listing.bump= ctx.bumps.listing;
         listing.collection_requested= Pubkey::from_str(&collection_requested).unwrap();
-        listing.nft_mint= ctx.accounts.nft_mint.key();
+        listing.maker_mint= ctx.accounts.maker_mint.key();
         
 
     
@@ -114,7 +114,7 @@ pub fn create_listing(ctx:Context<List>,
                     from: ctx.accounts.maker_ata.to_account_info(),
                     to: ctx.accounts.vault.to_account_info(),
                     authority: ctx.accounts.maker.to_account_info(),
-                    mint:ctx.accounts.nft_mint.to_account_info(),
+                    mint:ctx.accounts.maker_mint.to_account_info(),
                 },
             );
             

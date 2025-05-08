@@ -20,7 +20,7 @@ pub struct Take<'info>{
 
   pub admin: SystemAccount<'info>,
  
-  #[account(address = listing.nft_mint)]
+  #[account(address = listing.maker_mint)]
   pub maker_mint: InterfaceAccount<'info, Mint>,
   
   #[account()]
@@ -71,11 +71,15 @@ pub struct Take<'info>{
     associated_token::mint= maker_mint,
     associated_token::authority= listing,
     associated_token::token_program = token_program)]
-    pub vault: InterfaceAccount<'info, TokenAccount>,
+   
+   pub vault: InterfaceAccount<'info, TokenAccount>,
 
 
 
-  #[account(mut, seeds=[b"listing", maker.key().as_ref(), listing.seed.to_le_bytes().as_ref(), marketplace.key().as_ref()], bump=listing.bump)]
+
+
+  #[account(mut, seeds=[b"listing", maker.key().as_ref(), listing.seed.to_le_bytes().as_ref(), marketplace.key().as_ref()], bump=listing.bump,
+                has_one=maker_mint)]
   pub listing:Account<'info, Listing>,
  
   #[account(seeds=[b"quick", admin.key().as_ref() ], bump= marketplace.bump)]
