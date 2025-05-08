@@ -43,7 +43,8 @@ pub struct List<'info> {
         associated_token::authority= listing,
         associated_token::token_program = token_program)]
     pub vault: InterfaceAccount<'info, TokenAccount>,
-
+    
+    
     pub collection_mint: InterfaceAccount< 'info, Mint>,
     
     #[account(

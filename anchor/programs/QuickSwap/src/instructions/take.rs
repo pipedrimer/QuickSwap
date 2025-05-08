@@ -8,11 +8,6 @@ use anchor_spl::{
 
 
 use crate::state::{Listing,Marketplace};
-
-use super::listing;
-
-
-
 #[derive(Accounts)]
 
 
@@ -44,6 +39,7 @@ pub struct Take<'info>{
 
 )]
    pub metadata: Account<'info, MetadataAccount>,
+
  
   #[account(init_if_needed, 
             payer=taker, 
@@ -51,6 +47,33 @@ pub struct Take<'info>{
             associated_token::authority= taker,
             associated_token::token_program= token_program)]
   pub taker_ata_a: InterfaceAccount<'info, TokenAccount>,
+
+  #[account(init_if_needed, 
+            payer= taker, 
+            associated_token::mint= taker_mint,
+            associated_token::authority= maker,
+            associated_token::token_program=token_program)]
+  pub maker_ata_b: InterfaceAccount<'info, TokenAccount>,
+
+  #[account(mut,
+            associated_token::mint= taker_mint,
+            associated_token::authority= taker,
+            associated_token::token_program= token_program)]
+  pub taker_ata_b: InterfaceAccount<'info, TokenAccount>,
+
+  #[account(
+    seeds = [b"solvault", listing.key().as_ref()],
+    bump
+   )]
+   pub sol_vault: SystemAccount<'info>,
+
+   #[account(mut,
+    associated_token::mint= maker_mint,
+    associated_token::authority= listing,
+    associated_token::token_program = token_program)]
+    pub vault: InterfaceAccount<'info, TokenAccount>,
+
+
 
   #[account(mut, seeds=[b"listing", maker.key().as_ref(), listing.seed.to_le_bytes().as_ref(), marketplace.key().as_ref()], bump=listing.bump)]
   pub listing:Account<'info, Listing>,
