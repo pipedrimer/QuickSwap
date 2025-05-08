@@ -23,7 +23,7 @@ pub mod quick_swap {
      Ok(())
     }
 
-    pub fn listing(ctx:Context<List>, seed:u64, sol_deposit:u64, sol_demand:u64, collection_requested: Vec<Pubkey>) -> Result<()>{
+    pub fn listing(ctx:Context<List>, seed:u64, sol_deposit:u64, sol_demand:u64, collection_requested: String) -> Result<()>{
        create_listing(ctx, seed, collection_requested, sol_deposit, sol_demand,)?;
       Ok(())
    
