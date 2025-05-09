@@ -102,6 +102,7 @@ pub fn create_listing(ctx:Context<List>,
         listing.bump= ctx.bumps.listing;
         listing.collection_requested= Pubkey::from_str(&collection_requested).unwrap();
         listing.maker_mint= ctx.accounts.maker_mint.key();
+        listing.solvault_bump= ctx.bumps.sol_vault;
         
 
     
@@ -128,7 +129,15 @@ pub fn create_listing(ctx:Context<List>,
     
 
         if sol_deposit> 0 {
-            let listing = &ctx.accounts.listing;
+
+            let fee = (ctx.accounts.marketplace.taker_fee_bps as u64)
+        .checked_mul(sol_deposit)
+        .unwrap()
+        .checked_div(10000_u64)
+        .unwrap();
+
+        let amount= (sol_deposit).checked_add(fee).unwrap();
+           
 
         
         
@@ -142,7 +151,7 @@ pub fn create_listing(ctx:Context<List>,
 
         let  cpi_ctx= CpiContext::new(cpi_program, cpi_accounts);
 
-        transfer( cpi_ctx, listing.sol_deposit)?;
+        transfer( cpi_ctx, amount)?;
           
         }
     

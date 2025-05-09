@@ -12,7 +12,7 @@ pub struct Listing{
     pub sol_deposit:u64,
     pub sol_demand:u64,
     pub bump:u8,
-    
+    pub solvault_bump:u8
 
 
 }
