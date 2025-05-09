@@ -269,6 +269,7 @@ impl <'info> Take <'info>{
     let ctx_cpi = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer_seeds);
 
     close_account(ctx_cpi)?;
+    
 
     Ok(())
 }

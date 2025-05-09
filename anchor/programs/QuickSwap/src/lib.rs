@@ -28,4 +28,13 @@ pub mod quick_swap {
       Ok(())
    
     }
+
+    pub fn take_listing(ctx:Context<Take>) -> Result<()>{
+      ctx.accounts.transfer_nft()?;
+      ctx.accounts.release_listing()?;
+      ctx.accounts.transfer_sol()?;
+      ctx.accounts.close_account()?;
+
+      Ok(())
+    }
   }
