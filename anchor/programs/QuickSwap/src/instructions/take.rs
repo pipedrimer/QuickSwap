@@ -1,7 +1,7 @@
 use anchor_lang::{prelude::*,system_program::{Transfer,transfer}};
 use anchor_spl::{
     associated_token::AssociatedToken,
-    metadata::{MasterEditionAccount, Metadata, MetadataAccount},
+    metadata::{ Metadata, MetadataAccount},
     token::{close_account, transfer_checked, CloseAccount, TransferChecked},
     token_interface::{Mint, TokenAccount, TokenInterface},
 };
@@ -82,7 +82,7 @@ pub struct Take<'info>{
 
 
 
-  #[account(mut, seeds=[b"listing", maker.key().as_ref(), listing.seed.to_le_bytes().as_ref(), marketplace.key().as_ref()], bump=listing.bump,
+  #[account(mut, close=maker, seeds=[b"listing", maker.key().as_ref(), listing.seed.to_le_bytes().as_ref(), marketplace.key().as_ref()], bump=listing.bump,
                 has_one=maker_mint,
                 has_one=maker,
             )]
@@ -95,7 +95,7 @@ pub struct Take<'info>{
   pub metadata_program: Program<'info, Metadata>,
   pub token_program : Interface<'info, TokenInterface>,
   pub associated_token_program: Program<'info, AssociatedToken>,
-  pub system_program: Program<'info, System>
+  pub system_program: Program<'info, System>, 
 
 
 
@@ -254,7 +254,7 @@ impl <'info> Take <'info>{
     let cpi_program = self.token_program.to_account_info();
     let cpi_accounts= CloseAccount{
         account:self.vault.to_account_info(),
-        destination:self.taker.to_account_info(),
+        destination:self.maker.to_account_info(),
         authority:self.listing.to_account_info()
 
     };

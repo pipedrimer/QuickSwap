@@ -2,7 +2,7 @@ use anchor_lang::{prelude::*,system_program::{transfer, Transfer}};
 
 use anchor_spl::{
     associated_token::AssociatedToken,
-    token::{transfer_checked, TransferChecked},
+    token::{close_account, transfer_checked, CloseAccount, TransferChecked},
     token_interface::{Mint, TokenAccount, TokenInterface},
 };
 
@@ -88,7 +88,7 @@ impl <'info> Delist<'info> {
  
   pub fn withdraw_sol(&mut self)->Result<()>{
 
-      let cpi_program = self.system_program.to_account_info();
+     if self.listing.sol_deposit > 0 { let cpi_program = self.system_program.to_account_info();
       let cpi_accounts= Transfer{
         from:self.sol_vault.to_account_info(),
         to:self.maker.to_account_info()
@@ -104,12 +104,32 @@ impl <'info> Delist<'info> {
 
 
       transfer(cpi_ctx, balance)?;
+    }
       Ok(())
   }
 
   pub fn close_listing(&mut self)->Result<()>{
 
-    
+    let cpi_program = self.token_program.to_account_info();
+    let cpi_accounts= CloseAccount{
+        account:self.vault.to_account_info(),
+        destination:self.maker.to_account_info(),
+        authority:self.listing.to_account_info()
+
+    };
+
+    let seed_bytes = self.listing.seed.to_le_bytes();
+
+    let seeds = [b"listing", self.maker.to_account_info().key.as_ref(), seed_bytes.as_ref(), &self.marketplace.to_account_info().key.as_ref(), &[self.listing.bump]];
+
+    let signer_seeds = &[&seeds[..]];
+
+
+    let ctx_cpi = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer_seeds);
+
+    close_account(ctx_cpi)?;
+
+    Ok(())
   }
 
 }
