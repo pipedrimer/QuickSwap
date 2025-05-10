@@ -14,6 +14,7 @@ pub mod quick_swap {
     use super::*;
 
     pub fn initialize(ctx: Context<InitializeMarket>, fee: u8) -> Result<()> {
+        
         ctx.accounts.initmarket(fee, &ctx.bumps)?;
         Ok(())
     }
@@ -44,5 +45,15 @@ pub mod quick_swap {
         ctx.accounts.close_listing()?;
 
         Ok(())
+    }
+
+    pub fn create_bid(ctx: Context<PlaceBid>, sol_demand: u64, sol_deposit: u64, expiry_time:i64)-> Result<()>{
+          
+          ctx.accounts.init_bid(sol_deposit, sol_demand, expiry_time, &ctx.bumps)?;
+          ctx.accounts.transfer_nft()?;
+          ctx.accounts.transfer_sol()?;
+
+
+      Ok(())
     }
 }

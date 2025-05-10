@@ -1,9 +1,9 @@
-use anchor_lang::prelude::*;
+use anchor_lang::{prelude::*, system_program::{transfer, Transfer}};
 
 use anchor_spl::{
     associated_token::AssociatedToken,
     metadata::{Metadata, MetadataAccount},
-    token::{close_account, transfer_checked, CloseAccount, TransferChecked},
+    token::{transfer_checked, TransferChecked},
     token_interface::{Mint, TokenAccount, TokenInterface},
 };
 
@@ -30,6 +30,12 @@ pub struct PlaceBid <'info>{
 
     )]
     pub bid_vault: InterfaceAccount<'info, TokenAccount>,
+
+    #[account(
+    seeds = [b"solanavault", bid.key().as_ref()],
+    bump
+   )]
+   pub sol_vault: SystemAccount<'info>,
 
     pub bid_collection: InterfaceAccount<'info, Mint>,
 
@@ -71,7 +77,7 @@ pub struct PlaceBid <'info>{
 
 impl<'info> PlaceBid <'info> {
 
-    pub fn transfer_nft(&mut self, sol_deposit:u64, sol_demand:u64, expiry_time:i64 , bumps:&PlaceBidBumps)->Result<()>{
+    pub fn init_bid(&mut self, sol_deposit:u64, sol_demand:u64, expiry_time:i64 , bumps:&PlaceBidBumps)->Result<()>{
 
         self.bid.set_inner(Bid{
            bidder: self.bidder.key(),
@@ -81,6 +87,11 @@ impl<'info> PlaceBid <'info> {
            sol_demand,
            bump:bumps.bid
         });
+
+        Ok(())
+    }
+
+    pub fn transfer_nft(&mut self)-> Result<()>{
 
         let cpi_program = self.token_program.to_account_info();
 
@@ -101,7 +112,21 @@ impl<'info> PlaceBid <'info> {
 
     pub fn transfer_sol(&mut self)->Result<()>{
    
-        
+          if self.bid.sol_deposit > 0 {
+
+            let cpi_program = self.system_program.to_account_info();
+
+            let cpi_accounts = Transfer{
+            from: self.bidder.to_account_info(),
+            to: self.sol_vault.to_account_info(),
+
+             };
+
+            let  cpi_ctx= CpiContext::new(cpi_program, cpi_accounts);
+
+            transfer( cpi_ctx, self.bid.sol_deposit)?;
+          
+          }
         
         Ok(())
     }
