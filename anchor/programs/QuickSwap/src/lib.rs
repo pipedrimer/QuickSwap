@@ -55,5 +55,25 @@ pub mod quick_swap {
 
 
       Ok(())
-    }
+  }
+
+  pub fn accept_bid(ctx:Context<AcceptBid>)-> Result<()>{
+
+     ctx.accounts.transfer_nfts()?;
+     ctx.accounts.transfer_sol()?;
+     ctx.accounts.close_vaults()?;
+    
+    Ok(())
+  }
+
+  pub fn cancel_bid(ctx:Context<CancelBid>)-> Result<()>{
+
+     ctx.accounts.transfer_nft()?;
+     ctx.accounts.transfer_sol()?;
+     ctx.accounts.close_account()?;
+    
+    Ok(())
+  }
+
+
 }

@@ -23,7 +23,6 @@ pub struct Take<'info>{
   #[account(address = listing.maker_mint)]
   pub maker_mint: InterfaceAccount<'info, Mint>,
   
-  #[account()]
   pub taker_mint: InterfaceAccount<'info, Mint>,
 
   #[account(address = listing.collection_requested)]
