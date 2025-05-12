@@ -15,7 +15,7 @@ export const LandingPage = () => {
             <span className="text-xl font-bold tracking-tight">QuickSwap</span>
           </div>
           <div className="hidden md:flex items-center gap-8">
-            <p className="text-sm font-medium text-gray-300 hover:text-white transition-colors">How It Works</p>
+            <p className="text-sm font-medium text-gray-300 hover:text-white transition-colors">How It do Works</p>
             <p className="text-sm font-medium text-gray-300 hover:text-white transition-colors">Trade</p>
             <p className="text-sm font-medium text-gray-300 hover:text-white transition-colors">Docs</p>
           </div>
