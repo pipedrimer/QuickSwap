@@ -47,9 +47,9 @@ pub mod quick_swap {
         Ok(())
     }
 
-    pub fn create_bid(ctx: Context<PlaceBid>, sol_demand: u64, sol_deposit: u64, expiry_time:i64)-> Result<()>{
+    pub fn create_bid(ctx: Context<PlaceBid>, sol_demand: u64, sol_deposit: u64)-> Result<()>{
           
-          ctx.accounts.init_bid(sol_deposit, sol_demand, expiry_time, &ctx.bumps)?;
+          ctx.accounts.init_bid(sol_deposit, sol_demand, &ctx.bumps)?;
           ctx.accounts.transfer_nft()?;
           ctx.accounts.transfer_sol()?;
 

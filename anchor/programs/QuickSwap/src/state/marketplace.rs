@@ -6,7 +6,7 @@ use anchor_lang::prelude::*;
 pub struct Marketplace{
 
     pub admin: Pubkey,
-
+ 
     pub taker_fee_bps: u8,
 
     pub bump: u8,

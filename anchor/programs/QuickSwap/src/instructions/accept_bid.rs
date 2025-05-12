@@ -19,7 +19,7 @@ pub struct AcceptBid<'info> {
 
     pub bidder: SystemAccount<'info>,
 
-    pub admin: SystemAccount<'info>,
+     pub admin: SystemAccount<'info>,
 
        #[account(address = bid.bid_mint)]
     pub bid_mint: InterfaceAccount<'info, Mint>,
@@ -41,13 +41,13 @@ pub struct AcceptBid<'info> {
     associated_token::token_program = token_program)]
     pub vault: InterfaceAccount<'info, TokenAccount>,
 
-    #[account(
+    #[account(mut,
     seeds = [b"solanavault", bid.key().as_ref()],
     bump
    )]
     pub bid_sol_vault: SystemAccount<'info>,
 
-    #[account(
+    #[account(mut,
     seeds = [b"solvault", listing.key().as_ref()],
     bump
    )]
@@ -81,7 +81,7 @@ pub struct AcceptBid<'info> {
               )]
     pub bid: Account<'info, Bid>,
 
-    #[account(seeds=[b"quick", admin.key().as_ref() ], bump= marketplace.bump)]
+    #[account(seeds=[b"quickswap", admin.key().as_ref()], bump= marketplace.bump)]
     pub marketplace: Account<'info, Marketplace>,
     #[account(seeds= [b"treasury", marketplace.key().as_ref()], bump= marketplace.treasury_bump)]
 
@@ -309,6 +309,14 @@ impl <'info> AcceptBid <'info> {
     
 
     
+    **self.maker.to_account_info().try_borrow_mut_lamports()? += **self.sol_vault.to_account_info().lamports.borrow();
+    **self.sol_vault.to_account_info().try_borrow_mut_lamports()? = 0;
+
+    
+    **self.bidder.to_account_info().try_borrow_mut_lamports()? += **self.bid_sol_vault.to_account_info().lamports.borrow();
+    **self.bid_sol_vault.to_account_info().try_borrow_mut_lamports()? = 0;
+
+   
 
     Ok(())
     }

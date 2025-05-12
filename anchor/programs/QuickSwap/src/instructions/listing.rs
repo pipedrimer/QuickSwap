@@ -16,10 +16,10 @@ use crate::error::ListError;
 pub struct List<'info> {
     #[account(mut)]
     pub maker: Signer<'info>,
+
+    pub admin: SystemAccount<'info>,
     
-    pub admin: SystemAccount <'info>,
-    
-    #[account(seeds=[b"quick", admin.key().as_ref() ], bump= marketplace.bump)]
+    #[account(seeds=[b"quickswap", admin.key().as_ref()], bump= marketplace.bump)]
     pub marketplace: Account<'info, Marketplace>,
 
     #[account(init,
@@ -35,7 +35,7 @@ pub struct List<'info> {
     #[account(mut,associated_token::mint=maker_mint,
                   associated_token::authority=maker,
                   associated_token::token_program=token_program,)]
-    pub maker_ata:InterfaceAccount<'info, TokenAccount>,
+    pub maker_ata_a:InterfaceAccount<'info, TokenAccount>,
 
     #[account(init,
         payer= maker,
@@ -45,7 +45,7 @@ pub struct List<'info> {
     pub vault: InterfaceAccount<'info, TokenAccount>,
     
 
-    pub collection_mint: InterfaceAccount< 'info, Mint>,
+    pub maker_collection: InterfaceAccount< 'info, Mint>,
     
     #[account(
         seeds = [b"solvault", listing.key().as_ref()],
@@ -59,8 +59,8 @@ pub struct List<'info> {
         bump,
 
         seeds::program= metadata_program.key(),
-        constraint= metadata.collection.as_ref().unwrap().key.as_ref() ==collection_mint.key().as_ref(),
-        constraint= metadata.collection.as_ref().unwrap().verified == true,
+        constraint= metadata.collection.as_ref().unwrap().key.as_ref() ==maker_collection.key().as_ref() @ListError::InvalidCollection,
+        constraint= metadata.collection.as_ref().unwrap().verified == true @ListError::UnverifiedCollection, 
 
     )]
     pub metadata: Account<'info, MetadataAccount>,
@@ -112,7 +112,7 @@ pub fn create_listing(ctx:Context<List>,
             let cpi_ctx = CpiContext::new(
                 ctx.accounts.token_program.to_account_info(),
                 TransferChecked {
-                    from: ctx.accounts.maker_ata.to_account_info(),
+                    from: ctx.accounts.maker_ata_a.to_account_info(),
                     to: ctx.accounts.vault.to_account_info(),
                     authority: ctx.accounts.maker.to_account_info(),
                     mint:ctx.accounts.maker_mint.to_account_info(),

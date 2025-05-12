@@ -1,13 +1,15 @@
 use anchor_lang::{prelude::*,system_program::{Transfer,transfer}};
 use anchor_spl::{
     associated_token::AssociatedToken,
-    metadata::{ Metadata, MetadataAccount},
+    metadata::{  Metadata, MetadataAccount},
     token::{close_account, transfer_checked, CloseAccount, TransferChecked},
     token_interface::{Mint, TokenAccount, TokenInterface},
 };
 
 
 use crate::state::{Listing,Marketplace};
+use crate::error::ListError;
+
 #[derive(Accounts)]
 
 
@@ -18,26 +20,17 @@ pub struct Take<'info>{
 
   pub maker:SystemAccount<'info>,
 
-  pub admin: SystemAccount<'info>,
+   pub admin: SystemAccount<'info>,
  
   #[account(address = listing.maker_mint)]
   pub maker_mint: InterfaceAccount<'info, Mint>,
-  
+ 
   pub taker_mint: InterfaceAccount<'info, Mint>,
 
   #[account(address = listing.collection_requested)]
   pub taker_collection: InterfaceAccount<'info, Mint>,
 
-  #[account(
-    seeds= [b"metadata", taker_mint.key().as_ref(), metadata_program.key().as_ref()],
-    bump,
-
-    seeds::program= metadata_program.key(),
-    constraint= metadata.collection.as_ref().unwrap().key.as_ref() == taker_collection.key().as_ref(),
-    constraint= metadata.collection.as_ref().unwrap().verified == true,
-
-)]
-   pub metadata: Account<'info, MetadataAccount>,
+ 
 
 #[account(seeds= [b"treasury", marketplace.key().as_ref()], bump= marketplace.treasury_bump)]
 
@@ -64,9 +57,9 @@ pub struct Take<'info>{
             associated_token::token_program= token_program)]
   pub taker_ata_b: InterfaceAccount<'info, TokenAccount>,
 
-  #[account(
+  #[account(mut,
     seeds = [b"solvault", listing.key().as_ref()],
-    bump
+    bump=listing.solvault_bump
    )]
    pub sol_vault: SystemAccount<'info>,
 
@@ -78,18 +71,23 @@ pub struct Take<'info>{
    pub vault: InterfaceAccount<'info, TokenAccount>,
 
 
-
-
-
   #[account(mut, close=maker, seeds=[b"listing", maker.key().as_ref(), listing.seed.to_le_bytes().as_ref(), marketplace.key().as_ref()], bump=listing.bump,
                 has_one=maker_mint,
                 has_one=maker,
             )]
   pub listing:Account<'info, Listing>,
  
-  #[account(seeds=[b"quick", admin.key().as_ref() ], bump= marketplace.bump)]
+  #[account(seeds=[b"quickswap", admin.key().as_ref()], bump= marketplace.bump)]
   pub marketplace: Account<'info , Marketplace>,
 
+   #[account(
+    seeds= [b"metadata", taker_mint.key().as_ref(), metadata_program.key().as_ref()],
+    bump,
+
+    seeds::program= metadata_program.key(),
+    
+)]
+  pub metadata: Account<'info, MetadataAccount>,
 
   pub metadata_program: Program<'info, Metadata>,
   pub token_program : Interface<'info, TokenInterface>,
@@ -105,6 +103,16 @@ pub struct Take<'info>{
 impl <'info> Take <'info>{
 
     pub fn transfer_nft(&mut self )-> Result<()>{
+
+        require!(
+    self.metadata.collection.as_ref().map(|c| c.verified).unwrap_or(false),
+    ListError::UnverifiedCollection
+);
+
+require!(
+    self.metadata.collection.as_ref().map(|c| c.key == self.taker_collection.key()).unwrap_or(false),
+    ListError::InvalidCollection
+);
       
     let cpi_program = self.token_program.to_account_info();
     let cpi_accounts= TransferChecked{

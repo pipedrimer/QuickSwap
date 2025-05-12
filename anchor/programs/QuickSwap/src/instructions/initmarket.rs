@@ -11,7 +11,7 @@ pub struct InitializeMarket <'info>{
  #[account(mut)]
  pub admin: Signer <'info>,
  
- #[account(init, payer=admin, seeds=[b"quick", admin.key().as_ref()], bump, space= 8 + Marketplace::INIT_SPACE)]
+ #[account(init, payer=admin, seeds=[b"quickswap", admin.key().as_ref()], bump, space= 8 + Marketplace::INIT_SPACE)]
 
  pub marketplace: Account <'info, Marketplace>,
 

@@ -14,9 +14,9 @@ pub struct Delist<'info> {
     #[account(mut)]
     pub maker: Signer<'info>,
     
-    pub admin: SystemAccount <'info>,
+     pub admin: SystemAccount<'info>,
     
-    #[account(seeds=[b"quick", admin.key().as_ref() ], bump= marketplace.bump)]
+    #[account(seeds=[b"quickswap", admin.key().as_ref() ], bump= marketplace.bump)]
     pub marketplace: Account<'info, Marketplace>,
 
     #[account(mut, 

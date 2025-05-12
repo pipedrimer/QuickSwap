@@ -165,6 +165,7 @@ export type QuickSwap = {
         },
         {
           "name": "bidSolVault",
+          "writable": true,
           "pda": {
             "seeds": [
               {
@@ -192,6 +193,7 @@ export type QuickSwap = {
         },
         {
           "name": "solVault",
+          "writable": true,
           "pda": {
             "seeds": [
               {
@@ -396,7 +398,11 @@ export type QuickSwap = {
                   117,
                   105,
                   99,
-                  107
+                  107,
+                  115,
+                  119,
+                  97,
+                  112
                 ]
               },
               {
@@ -682,7 +688,11 @@ export type QuickSwap = {
                   117,
                   105,
                   99,
-                  107
+                  107,
+                  115,
+                  119,
+                  97,
+                  112
                 ]
               },
               {
@@ -821,7 +831,7 @@ export type QuickSwap = {
           "name": "bidCollection"
         },
         {
-          "name": "bidderAta",
+          "name": "bidderAtaB",
           "writable": true,
           "pda": {
             "seeds": [
@@ -945,7 +955,11 @@ export type QuickSwap = {
                   117,
                   105,
                   99,
-                  107
+                  107,
+                  115,
+                  119,
+                  97,
+                  112
                 ]
               },
               {
@@ -988,6 +1002,50 @@ export type QuickSwap = {
           }
         },
         {
+          "name": "masterEdition",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  101,
+                  116,
+                  97,
+                  100,
+                  97,
+                  116,
+                  97
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "bidMint"
+              },
+              {
+                "kind": "account",
+                "path": "metadataProgram"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  100,
+                  105,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              }
+            ],
+            "program": {
+              "kind": "account",
+              "path": "metadataProgram"
+            }
+          }
+        },
+        {
           "name": "metadataProgram",
           "address": "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
         },
@@ -1011,10 +1069,6 @@ export type QuickSwap = {
         {
           "name": "solDeposit",
           "type": "u64"
-        },
-        {
-          "name": "expiryTime",
-          "type": "i64"
         }
       ]
     },
@@ -1053,7 +1107,11 @@ export type QuickSwap = {
                   117,
                   105,
                   99,
-                  107
+                  107,
+                  115,
+                  119,
+                  97,
+                  112
                 ]
               },
               {
@@ -1284,7 +1342,11 @@ export type QuickSwap = {
                   117,
                   105,
                   99,
-                  107
+                  107,
+                  115,
+                  119,
+                  97,
+                  112
                 ]
               },
               {
@@ -1362,7 +1424,11 @@ export type QuickSwap = {
                   117,
                   105,
                   99,
-                  107
+                  107,
+                  115,
+                  119,
+                  97,
+                  112
                 ]
               },
               {
@@ -1408,7 +1474,7 @@ export type QuickSwap = {
           "name": "makerMint"
         },
         {
-          "name": "makerAta",
+          "name": "makerAtaA",
           "writable": true,
           "pda": {
             "seeds": [
@@ -1522,7 +1588,7 @@ export type QuickSwap = {
           }
         },
         {
-          "name": "collectionMint"
+          "name": "makerCollection"
         },
         {
           "name": "solVault",
@@ -1697,38 +1763,6 @@ export type QuickSwap = {
         },
         {
           "name": "takerCollection"
-        },
-        {
-          "name": "metadata",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  109,
-                  101,
-                  116,
-                  97,
-                  100,
-                  97,
-                  116,
-                  97
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "takerMint"
-              },
-              {
-                "kind": "account",
-                "path": "metadataProgram"
-              }
-            ],
-            "program": {
-              "kind": "account",
-              "path": "metadataProgram"
-            }
-          }
         },
         {
           "name": "treasury",
@@ -1927,6 +1961,7 @@ export type QuickSwap = {
         },
         {
           "name": "solVault",
+          "writable": true,
           "pda": {
             "seeds": [
               {
@@ -2050,7 +2085,11 @@ export type QuickSwap = {
                   117,
                   105,
                   99,
-                  107
+                  107,
+                  115,
+                  119,
+                  97,
+                  112
                 ]
               },
               {
@@ -2058,6 +2097,38 @@ export type QuickSwap = {
                 "path": "admin"
               }
             ]
+          }
+        },
+        {
+          "name": "metadata",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  101,
+                  116,
+                  97,
+                  100,
+                  97,
+                  116,
+                  97
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "takerMint"
+              },
+              {
+                "kind": "account",
+                "path": "metadataProgram"
+              }
+            ],
+            "program": {
+              "kind": "account",
+              "path": "metadataProgram"
+            }
           }
         },
         {
@@ -2158,13 +2229,13 @@ export type QuickSwap = {
     },
     {
       "code": 6007,
-      "name": "invalidNftAccountLayout",
+      "name": "invalidCollection",
       "msg": "NFT does not match required layout."
     },
     {
       "code": 6008,
       "name": "tooManyNfTs",
-      "msg": "Too many NFTs provided."
+      "msg": "NFT does not match the requested Collection"
     },
     {
       "code": 6009,
@@ -2190,10 +2261,6 @@ export type QuickSwap = {
           {
             "name": "bidMint",
             "type": "pubkey"
-          },
-          {
-            "name": "expiryTime",
-            "type": "i64"
           },
           {
             "name": "solDeposit",

@@ -17,8 +17,8 @@ pub enum ListError {
     #[msg("NFT collection is not verified.")]
     UnverifiedCollection,
     #[msg("NFT does not match required layout.")]
-    InvalidNFTAccountLayout,
-    #[msg("Too many NFTs provided.")]
+    InvalidCollection,
+    #[msg("NFT does not match the requested Collection")]
     TooManyNFTs,
     #[msg("Requested more than 3 collections.")]
     TooManyRequestedCollections,

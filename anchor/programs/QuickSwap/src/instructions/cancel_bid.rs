@@ -19,11 +19,10 @@ pub struct CancelBid<'info> {
   
     pub maker: SystemAccount<'info>,
 
-    pub admin: SystemAccount<'info>,
+     pub admin: SystemAccount<'info>,
 
        #[account(address = bid.bid_mint)]
     pub bid_mint: InterfaceAccount<'info, Mint>,
-
 
      #[account(address = listing.maker_mint)]
     pub maker_mint: InterfaceAccount<'info, Mint>,
@@ -60,7 +59,7 @@ pub struct CancelBid<'info> {
               )]
     pub bid: Account<'info, Bid>,
 
-    #[account(seeds=[b"quick", admin.key().as_ref() ], bump= marketplace.bump)]
+    #[account(seeds=[b"quickswap" , admin.key().as_ref()], bump= marketplace.bump)]
     pub marketplace: Account<'info, Marketplace>,
    
     pub token_program: Interface<'info, TokenInterface>,
