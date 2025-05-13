@@ -1,6 +1,6 @@
 import * as anchor from '@coral-xyz/anchor'
 import { Program, BN } from '@coral-xyz/anchor'
-import { Keypair, PublicKey } from '@solana/web3.js'
+import { Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction } from '@solana/web3.js'
 import { QuickSwap } from '../target/types/quick_swap'
 import {
   createNft,
@@ -9,15 +9,13 @@ import {
   mplTokenMetadata,
   verifySizedCollectionItem,
 } from '@metaplex-foundation/mpl-token-metadata'
+import { createSignerFromKeypair, generateSigner, keypairIdentity, percentAmount } from '@metaplex-foundation/umi'
 import {
-  createSignerFromKeypair,
-  generateSigner,
-  keypairIdentity,
-  percentAmount,
-} from '@metaplex-foundation/umi'
-import { TOKEN_2022_PROGRAM_ID, getAssociatedTokenAddressSync } from '@solana/spl-token'
+  TOKEN_2022_PROGRAM_ID,
+  getAssociatedTokenAddressSync,
+  getMinimumBalanceForRentExemptMint,
+} from '@solana/spl-token'
 import { createUmi } from '@metaplex-foundation/umi-bundle-defaults'
-import NodeWallet from '@coral-xyz/anchor/dist/cjs/nodewallet'
 import { randomBytes } from 'crypto'
 
 describe('QuickSwap', () => {
@@ -32,9 +30,7 @@ describe('QuickSwap', () => {
 
   const tokenProgram = TOKEN_2022_PROGRAM_ID
 
-  const payer = provider.wallet as NodeWallet
-
-  const umi = createUmi(provider.connection)
+  const umi = createUmi(provider.connection.rpcEndpoint)
 
   const confirm = async (signature: string): Promise<string> => {
     const block = await connection.getLatestBlockhash()
@@ -50,56 +46,93 @@ describe('QuickSwap', () => {
     return signature
   }
 
+  const airdrop = async (connection: Connection, pubkey: PublicKey, sol = 1) => {
+    const sig = await connection.requestAirdrop(pubkey, sol * LAMPORTS_PER_SOL)
+    await connection.confirmTransaction(sig, 'confirmed')
+    console.log(`Airdropped ${sol} SOL to ${pubkey.toBase58()}`)
+  }
+
   const seed = new BN(randomBytes(8))
-
-
 
   // const [makerMintPk, takerMintPk, bidMintPk] = [makerMint, takerMint, bidMint].map((a)=> new PublicKey(a.publicKey.))
   //create nft creator wallet
-  const creatorWallet = umi.eddsa.createKeypairFromSecretKey(new Uint8Array(payer.payer.secretKey))
+
+  const creatorWallet = umi.eddsa.generateKeypair()
   const creator = createSignerFromKeypair(umi, creatorWallet)
+
   //use umi and mpltokenmetadata program
   umi.use(keypairIdentity(creator))
   umi.use(mplTokenMetadata())
 
-    const [maker, taker, admin, bidder] = Array.from({ length: 4 }, () => Keypair.generate())
+  const [maker, taker, admin, bidder] = Array.from({ length: 4 }, () => Keypair.generate())
   const [makerMint, takerMint, bidMint, makerCollection, takerCollection, bidCollection] = Array.from(
     { length: 6 },
     () => generateSigner(umi),
   )
 
-
   const [makerAtaMakerNft, makerAtaTakerNft, takerAtaMakerNft, takerAtaTakerNft] = [maker, taker]
     .map((a) =>
-      [makerMint, takerMint].map((b) => getAssociatedTokenAddressSync( new anchor.web3.PublicKey(b.publicKey), a.publicKey, false, tokenProgram)),
+      [makerMint, takerMint].map((b) =>
+        getAssociatedTokenAddressSync(new anchor.web3.PublicKey(b.publicKey), a.publicKey, false, tokenProgram),
+      ),
     )
     .flat()
 
   const [makerAtaMaker, makerAtaBidNft, bidAtaMakerNft, bidAtaBidNft] = [maker, bidder]
     .map((a) =>
-      [makerMint, bidMint].map((b) => getAssociatedTokenAddressSync( new anchor.web3.PublicKey(b.publicKey), a.publicKey, false, tokenProgram)),
+      [makerMint, bidMint].map((b) =>
+        getAssociatedTokenAddressSync(new anchor.web3.PublicKey(b.publicKey), a.publicKey, false, tokenProgram),
+      ),
     )
     .flat()
-  
 
   const marketplacePdaAccount = PublicKey.findProgramAddressSync(
     [Buffer.from('quickswap'), admin.publicKey.toBuffer()],
     program.programId,
-  )[0];
+  )[0]
 
-  const listingPdaAccount = PublicKey.findProgramAddressSync([Buffer.from('listing'), maker.publicKey.toBuffer(),seed.toArrayLike(Buffer, "le", 8), marketplacePdaAccount.toBuffer()], program.programId)[0]
+  const listingPdaAccount = PublicKey.findProgramAddressSync(
+    [
+      Buffer.from('listing'),
+      maker.publicKey.toBuffer(),
+      seed.toArrayLike(Buffer, 'le', 8),
+      marketplacePdaAccount.toBuffer(),
+    ],
+    program.programId,
+  )[0]
 
-  const treasuryPdaAccount = PublicKey.findProgramAddressSync([Buffer.from('treasury'), marketplacePdaAccount.toBuffer()], program.programId)[0];
+  const treasuryPdaAccount = PublicKey.findProgramAddressSync(
+    [Buffer.from('treasury'), marketplacePdaAccount.toBuffer()],
+    program.programId,
+  )[0]
 
-  const bidPdaAccount = PublicKey.findProgramAddressSync([Buffer.from('bid'), bidder.publicKey.toBuffer(),listingPdaAccount.toBuffer()],program.programId)[0];
+  const bidPdaAccount = PublicKey.findProgramAddressSync(
+    [Buffer.from('bid'), bidder.publicKey.toBuffer(), listingPdaAccount.toBuffer()],
+    program.programId,
+  )[0]
 
-  const makerVault = getAssociatedTokenAddressSync( new anchor.web3.PublicKey(makerMint.publicKey), listingPdaAccount, true, tokenProgram);
+  const makerVault = getAssociatedTokenAddressSync(
+    new anchor.web3.PublicKey(makerMint.publicKey),
+    listingPdaAccount,
+    true,
+    tokenProgram,
+  )
 
-  const makerSolVault= PublicKey.findProgramAddressSync([Buffer.from('solvault'), listingPdaAccount.toBuffer()], program.programId)[0];
+  const makerSolVault = PublicKey.findProgramAddressSync(
+    [Buffer.from('solvault'), listingPdaAccount.toBuffer()],
+    program.programId,
+  )[0]
 
-  const bidVault = getAssociatedTokenAddressSync( new anchor.web3.PublicKey(bidMint.publicKey), bidPdaAccount, true, tokenProgram);
-  const bidSolVault= PublicKey.findProgramAddressSync([Buffer.from('solanavault'), bidPdaAccount.toBuffer()], program.programId)[0];
-
+  const bidVault = getAssociatedTokenAddressSync(
+    new anchor.web3.PublicKey(bidMint.publicKey),
+    bidPdaAccount,
+    true,
+    tokenProgram,
+  )
+  const bidSolVault = PublicKey.findProgramAddressSync(
+    [Buffer.from('solanavault'), bidPdaAccount.toBuffer()],
+    program.programId,
+  )[0]
 
   // const accounts ={
   //   maker:maker.publicKey,
@@ -123,9 +156,34 @@ describe('QuickSwap', () => {
   //   makerSolVault,
   //   bidVault,
   //   bidSolVault
-    
+
   // }
 
+  beforeAll(async () => {
+    await airdrop(connection, new anchor.web3.PublicKey(creator.publicKey), 10)
+  })
+
+  it('Airdrop', async () => {
+    // let lamports = await getMinimumBalanceForRentExemptMint(connection)
+    const tx = new Transaction()
+
+    tx.instructions = [
+      ...[maker, taker, bidder].map((account) =>
+        SystemProgram.transfer({
+          fromPubkey: provider.publicKey,
+          toPubkey: account.publicKey,
+          lamports: 10 * LAMPORTS_PER_SOL,
+        }),
+
+        
+      ),
+
+      
+      
+    ]
+
+    await provider.sendAndConfirm(tx).then(log)
+  })
   it('Create Collection NFTs', async () => {
     await createNft(umi, {
       mint: makerCollection,
@@ -168,8 +226,6 @@ describe('QuickSwap', () => {
       },
     }).sendAndConfirm(umi)
     console.log(`Created Collection NFT: ${bidCollection.publicKey.toString()}`)
-    
-    
   })
 
   it('Mint NFTs', async () => {
@@ -256,6 +312,4 @@ describe('QuickSwap', () => {
     }).sendAndConfirm(umi)
     console.log('Nft Verified')
   })
-
-  
 })
