@@ -15,7 +15,7 @@ import {
   keypairIdentity,
   percentAmount,
 } from '@metaplex-foundation/umi'
-import { TOKEN_PROGRAM_ID, getAssociatedTokenAddressSync } from '@solana/spl-token'
+import { TOKEN_2022_PROGRAM_ID, getAssociatedTokenAddressSync } from '@solana/spl-token'
 import { createUmi } from '@metaplex-foundation/umi-bundle-defaults'
 import NodeWallet from '@coral-xyz/anchor/dist/cjs/nodewallet'
 import { randomBytes } from 'crypto'
@@ -30,7 +30,7 @@ describe('QuickSwap', () => {
 
   const programId = program.programId
 
-  const tokenProgram = TOKEN_PROGRAM_ID
+  const tokenProgram = TOKEN_2022_PROGRAM_ID
 
   const payer = provider.wallet as NodeWallet
 
@@ -52,11 +52,7 @@ describe('QuickSwap', () => {
 
   const seed = new BN(randomBytes(8))
 
-  const [maker, taker, admin, bidder] = Array.from({ length: 4 }, () => Keypair.generate())
-  const [makerMint, takerMint, bidMint, makerCollection, takerCollection, bidCollection] = Array.from(
-    { length: 6 },
-    () => generateSigner(umi),
-  )
+
 
   // const [makerMintPk, takerMintPk, bidMintPk] = [makerMint, takerMint, bidMint].map((a)=> new PublicKey(a.publicKey.))
   //create nft creator wallet
@@ -65,6 +61,12 @@ describe('QuickSwap', () => {
   //use umi and mpltokenmetadata program
   umi.use(keypairIdentity(creator))
   umi.use(mplTokenMetadata())
+
+    const [maker, taker, admin, bidder] = Array.from({ length: 4 }, () => Keypair.generate())
+  const [makerMint, takerMint, bidMint, makerCollection, takerCollection, bidCollection] = Array.from(
+    { length: 6 },
+    () => generateSigner(umi),
+  )
 
 
   const [makerAtaMakerNft, makerAtaTakerNft, takerAtaMakerNft, takerAtaTakerNft] = [maker, taker]
@@ -99,30 +101,30 @@ describe('QuickSwap', () => {
   const bidSolVault= PublicKey.findProgramAddressSync([Buffer.from('solanavault'), bidPdaAccount.toBuffer()], program.programId)[0];
 
 
-  const accounts ={
-    maker:maker.publicKey,
-    taker:taker.publicKey,
-    admin:admin.publicKey,
-    bidder:bidder.publicKey,
-    makerMint:makerMint.publicKey,
-    takerMint:takerMint.publicKey,
-    bidMint:bidMint.publicKey,
-    makerAtaMakerNft,
-    makerAtaTakerNft,
-    makerAtaBidNft,
-    takerAtaMakerNft,
-    takerAtaTakerNft,
-    bidAtaMakerNft,
-    bidAtaBidNft,
-    marketplacePdaAccount,
-    listingPdaAccount,
-    treasuryPdaAccount,
-    makerVault,
-    makerSolVault,
-    bidVault,
-    bidSolVault
+  // const accounts ={
+  //   maker:maker.publicKey,
+  //   taker:taker.publicKey,
+  //   admin:admin.publicKey,
+  //   bidder:bidder.publicKey,
+  //   makerMint:makerMint.publicKey,
+  //   takerMint:takerMint.publicKey,
+  //   bidMint:bidMint.publicKey,
+  //   makerAtaMakerNft,
+  //   makerAtaTakerNft,
+  //   makerAtaBidNft,
+  //   takerAtaMakerNft,
+  //   takerAtaTakerNft,
+  //   bidAtaMakerNft,
+  //   bidAtaBidNft,
+  //   marketplacePdaAccount,
+  //   listingPdaAccount,
+  //   treasuryPdaAccount,
+  //   makerVault,
+  //   makerSolVault,
+  //   bidVault,
+  //   bidSolVault
     
-  }
+  // }
 
   it('Create Collection NFTs', async () => {
     await createNft(umi, {
@@ -166,6 +168,8 @@ describe('QuickSwap', () => {
       },
     }).sendAndConfirm(umi)
     console.log(`Created Collection NFT: ${bidCollection.publicKey.toString()}`)
+    
+    
   })
 
   it('Mint NFTs', async () => {
@@ -253,5 +257,5 @@ describe('QuickSwap', () => {
     console.log('Nft Verified')
   })
 
-  //
+  
 })
