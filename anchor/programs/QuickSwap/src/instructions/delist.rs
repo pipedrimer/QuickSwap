@@ -7,7 +7,6 @@ use anchor_spl::{
 };
 
 use crate::state::{ Listing, Marketplace };
-use crate::error::ListError;
 #[derive(Accounts)]
 
 pub struct Delist<'info> {
@@ -34,7 +33,7 @@ pub struct Delist<'info> {
     #[account(mut,associated_token::mint=maker_mint,
                   associated_token::authority=maker,
                   associated_token::token_program=token_program,)]
-    pub maker_ata:InterfaceAccount<'info, TokenAccount>,
+    pub maker_ata_a:InterfaceAccount<'info, TokenAccount>,
 
     #[account(mut,
         associated_token::mint= maker_mint,
@@ -67,7 +66,7 @@ impl <'info> Delist<'info> {
 
         let cpi_accounts = TransferChecked{
             from:self.vault.to_account_info(),
-            to:self.maker_ata.to_account_info(),
+            to:self.maker_ata_a.to_account_info(),
             mint:self.maker_mint.to_account_info(),
             authority:self.listing.to_account_info()
         };

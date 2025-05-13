@@ -1161,7 +1161,7 @@ export type QuickSwap = {
           ]
         },
         {
-          "name": "makerAta",
+          "name": "makerAtaA",
           "writable": true,
           "pda": {
             "seeds": [

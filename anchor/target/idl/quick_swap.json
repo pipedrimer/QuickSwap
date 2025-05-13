@@ -1155,7 +1155,7 @@
           ]
         },
         {
-          "name": "maker_ata",
+          "name": "maker_ata_a",
           "writable": true,
           "pda": {
             "seeds": [
