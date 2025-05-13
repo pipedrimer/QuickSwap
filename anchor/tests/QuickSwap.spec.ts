@@ -2,6 +2,7 @@ import * as anchor from '@coral-xyz/anchor'
 import { Program, BN } from '@coral-xyz/anchor'
 import { Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction } from '@solana/web3.js'
 import { QuickSwap } from '../target/types/quick_swap'
+import wallet from "./id.json";
 import {
   createNft,
   findMasterEditionPda,
@@ -9,9 +10,9 @@ import {
   mplTokenMetadata,
   verifySizedCollectionItem,
 } from '@metaplex-foundation/mpl-token-metadata'
-import { createSignerFromKeypair, generateSigner, keypairIdentity, percentAmount } from '@metaplex-foundation/umi'
+import { createSignerFromKeypair, generateSigner, percentAmount, signerIdentity } from '@metaplex-foundation/umi'
 import {
-  TOKEN_2022_PROGRAM_ID,
+  TOKEN_PROGRAM_ID,
   getAssociatedTokenAddressSync,
   getMinimumBalanceForRentExemptMint,
 } from '@solana/spl-token'
@@ -28,7 +29,7 @@ describe('QuickSwap', () => {
 
   const programId = program.programId
 
-  const tokenProgram = TOKEN_2022_PROGRAM_ID
+  const tokenProgram = TOKEN_PROGRAM_ID
 
   const umi = createUmi(provider.connection.rpcEndpoint)
 
@@ -50,6 +51,7 @@ describe('QuickSwap', () => {
     const sig = await connection.requestAirdrop(pubkey, sol * LAMPORTS_PER_SOL)
     await connection.confirmTransaction(sig, 'confirmed')
     console.log(`Airdropped ${sol} SOL to ${pubkey.toBase58()}`)
+    return sig
   }
 
   const seed = new BN(randomBytes(8))
@@ -57,11 +59,11 @@ describe('QuickSwap', () => {
   // const [makerMintPk, takerMintPk, bidMintPk] = [makerMint, takerMint, bidMint].map((a)=> new PublicKey(a.publicKey.))
   //create nft creator wallet
 
-  const creatorWallet = umi.eddsa.generateKeypair()
-  const creator = createSignerFromKeypair(umi, creatorWallet)
+  const creatorWallet =  umi.eddsa.createKeypairFromSecretKey(new Uint8Array(wallet))
+  const creator = createSignerFromKeypair(umi, creatorWallet);
 
   //use umi and mpltokenmetadata program
-  umi.use(keypairIdentity(creator))
+umi.use(signerIdentity(creator));
   umi.use(mplTokenMetadata())
 
   const [maker, taker, admin, bidder] = Array.from({ length: 4 }, () => Keypair.generate())
@@ -134,7 +136,7 @@ describe('QuickSwap', () => {
     program.programId,
   )[0]
 
-  // const accounts ={
+  //   const accounts = {
   //   maker:maker.publicKey,
   //   taker:taker.publicKey,
   //   admin:admin.publicKey,
@@ -160,7 +162,8 @@ describe('QuickSwap', () => {
   // }
 
   beforeAll(async () => {
-    await airdrop(connection, new anchor.web3.PublicKey(creator.publicKey), 10)
+
+    await airdrop(connection, new anchor.web3.PublicKey(creator.publicKey), 10).then(log)
   })
 
   it('Airdrop', async () => {
@@ -233,7 +236,7 @@ describe('QuickSwap', () => {
       mint: makerMint,
       name: 'Unbothered Ape 100',
       symbol: 'UA100',
-      uri: '',
+      uri: 'https://devnet.irys.xyz/4uk3PNx1RhxU82AEqvbgauELHBtooM9Ctc2aLtnwaSzW',
       sellerFeeBasisPoints: percentAmount(3),
       creators: null,
       collection: {
@@ -247,7 +250,7 @@ describe('QuickSwap', () => {
       mint: takerMint,
       name: 'Angry Jeff',
       symbol: 'DSoJ10',
-      uri: '',
+      uri: 'https://devnet.irys.xyz/4uk3PNx1RhxU82AEqvbgauELHBtooM9Ctc2aLtnwaSzW',
       sellerFeeBasisPoints: percentAmount(3),
       creators: null,
       collection: {
@@ -261,7 +264,7 @@ describe('QuickSwap', () => {
       mint: bidMint,
       name: 'Friendly Face 15',
       symbol: 'FF15',
-      uri: '',
+      uri: 'https://devnet.irys.xyz/4uk3PNx1RhxU82AEqvbgauELHBtooM9Ctc2aLtnwaSzW',
       sellerFeeBasisPoints: percentAmount(3),
       creators: null,
       collection: {
