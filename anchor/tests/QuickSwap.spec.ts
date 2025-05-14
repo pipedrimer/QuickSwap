@@ -32,7 +32,7 @@ describe('QuickSwap', () => {
 
   const connection = provider.connection
 
-  const program = anchor.workspace.quickswap as Program<QuickSwap>
+  const program = anchor.workspace.QuickSwap as Program<QuickSwap>
 
   const programId = program.programId
 

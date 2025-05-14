@@ -5,7 +5,7 @@
  * IDL can be found at `target/idl/quick_swap.json`.
  */
 export type QuickSwap = {
-  "address": "coUnmi3oBUtwtd9fjeAvSsJssXh5A5xyPbhpewyzRVF",
+  "address": "G5HbQhYdUkEVRqCywp9te8EvNgLCb3Zj8LqnAUzX5rnK",
   "metadata": {
     "name": "quickSwap",
     "version": "0.1.0",
