@@ -2,7 +2,7 @@ import * as anchor from '@coral-xyz/anchor'
 import { Program, BN } from '@coral-xyz/anchor'
 import { Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction } from '@solana/web3.js'
 import { QuickSwap } from '../target/types/quick_swap'
-import wallet from "./id.json";
+
 import {
   createNft,
   findMasterEditionPda,
@@ -10,12 +10,14 @@ import {
   mplTokenMetadata,
   verifySizedCollectionItem,
 } from '@metaplex-foundation/mpl-token-metadata'
-import { createSignerFromKeypair, generateSigner, percentAmount, signerIdentity } from '@metaplex-foundation/umi'
 import {
-  TOKEN_PROGRAM_ID,
-  getAssociatedTokenAddressSync,
-  getMinimumBalanceForRentExemptMint,
-} from '@solana/spl-token'
+  createSignerFromKeypair,
+  generateSigner,
+  KeypairSigner,
+  percentAmount,
+  signerIdentity,
+} from '@metaplex-foundation/umi'
+import { TOKEN_PROGRAM_ID, getAssociatedTokenAddressSync } from '@solana/spl-token'
 import { createUmi } from '@metaplex-foundation/umi-bundle-defaults'
 import { randomBytes } from 'crypto'
 
@@ -31,7 +33,7 @@ describe('QuickSwap', () => {
 
   const tokenProgram = TOKEN_PROGRAM_ID
 
-  const umi = createUmi(provider.connection.rpcEndpoint)
+  const umi = createUmi(provider.connection)
 
   const confirm = async (signature: string): Promise<string> => {
     const block = await connection.getLatestBlockhash()
@@ -59,110 +61,89 @@ describe('QuickSwap', () => {
   // const [makerMintPk, takerMintPk, bidMintPk] = [makerMint, takerMint, bidMint].map((a)=> new PublicKey(a.publicKey.))
   //create nft creator wallet
 
-  const creatorWallet =  umi.eddsa.createKeypairFromSecretKey(new Uint8Array(wallet))
-  const creator = createSignerFromKeypair(umi, creatorWallet);
-
-  //use umi and mpltokenmetadata program
-umi.use(signerIdentity(creator));
-  umi.use(mplTokenMetadata())
+  let makerCollection: KeypairSigner
+  let makerMint: KeypairSigner
+  let takerCollection: KeypairSigner
+  let takerMint: KeypairSigner
+  let bidCollection: KeypairSigner
+  let bidMint: KeypairSigner
 
   const [maker, taker, admin, bidder] = Array.from({ length: 4 }, () => Keypair.generate())
-  const [makerMint, takerMint, bidMint, makerCollection, takerCollection, bidCollection] = Array.from(
-    { length: 6 },
-    () => generateSigner(umi),
-  )
 
-  const [makerAtaMakerNft, makerAtaTakerNft, takerAtaMakerNft, takerAtaTakerNft] = [maker, taker]
-    .map((a) =>
-      [makerMint, takerMint].map((b) =>
-        getAssociatedTokenAddressSync(new anchor.web3.PublicKey(b.publicKey), a.publicKey, false, tokenProgram),
-      ),
-    )
-    .flat()
+  const creatorWallet = umi.eddsa.createKeypairFromSecretKey(new Uint8Array(admin.secretKey))
+  const creator = createSignerFromKeypair(umi, creatorWallet)
 
-  const [makerAtaMaker, makerAtaBidNft, bidAtaMakerNft, bidAtaBidNft] = [maker, bidder]
-    .map((a) =>
-      [makerMint, bidMint].map((b) =>
-        getAssociatedTokenAddressSync(new anchor.web3.PublicKey(b.publicKey), a.publicKey, false, tokenProgram),
-      ),
-    )
-    .flat()
+  //use umi and mpltokenmetadata program
+  umi.use(signerIdentity(creator))
+  umi.use(mplTokenMetadata())
 
-  const marketplacePdaAccount = PublicKey.findProgramAddressSync(
-    [Buffer.from('quickswap'), admin.publicKey.toBuffer()],
-    program.programId,
-  )[0]
+  // const [makerAtaMakerNft, makerAtaTakerNft, takerAtaMakerNft, takerAtaTakerNft] = [maker, taker]
+  //   .map((a) =>
+  //     [makerMint, takerMint].map((b) =>
+  //       getAssociatedTokenAddressSync(new anchor.web3.PublicKey(b.publicKey), a.publicKey, false, tokenProgram),
+  //     ),
+  //   )
+  //   .flat()
 
-  const listingPdaAccount = PublicKey.findProgramAddressSync(
-    [
-      Buffer.from('listing'),
-      maker.publicKey.toBuffer(),
-      seed.toArrayLike(Buffer, 'le', 8),
-      marketplacePdaAccount.toBuffer(),
-    ],
-    program.programId,
-  )[0]
+  // const [makerAtaMaker, makerAtaBidNft, bidAtaMakerNft, bidAtaBidNft] = [maker, bidder]
+  //   .map((a) =>
+  //     [makerMint, bidMint].map((b) =>
+  //       getAssociatedTokenAddressSync(new anchor.web3.PublicKey(b.publicKey), a.publicKey, false, tokenProgram),
+  //     ),
+  //   )
+  //   .flat()
 
-  const treasuryPdaAccount = PublicKey.findProgramAddressSync(
-    [Buffer.from('treasury'), marketplacePdaAccount.toBuffer()],
-    program.programId,
-  )[0]
+  // const marketplacePdaAccount = PublicKey.findProgramAddressSync(
+  //   [Buffer.from('quickswap'), admin.publicKey.toBuffer()],
+  //   program.programId,
+  // )[0]
 
-  const bidPdaAccount = PublicKey.findProgramAddressSync(
-    [Buffer.from('bid'), bidder.publicKey.toBuffer(), listingPdaAccount.toBuffer()],
-    program.programId,
-  )[0]
+  // const listingPdaAccount = PublicKey.findProgramAddressSync(
+  //   [
+  //     Buffer.from('listing'),
+  //     maker.publicKey.toBuffer(),
+  //     seed.toArrayLike(Buffer, 'le', 8),
+  //     marketplacePdaAccount.toBuffer(),
+  //   ],
+  //   program.programId,
+  // )[0]
 
-  const makerVault = getAssociatedTokenAddressSync(
-    new anchor.web3.PublicKey(makerMint.publicKey),
-    listingPdaAccount,
-    true,
-    tokenProgram,
-  )
+  // const treasuryPdaAccount = PublicKey.findProgramAddressSync(
+  //   [Buffer.from('treasury'), marketplacePdaAccount.toBuffer()],
+  //   program.programId,
+  // )[0]
 
-  const makerSolVault = PublicKey.findProgramAddressSync(
-    [Buffer.from('solvault'), listingPdaAccount.toBuffer()],
-    program.programId,
-  )[0]
+  // const bidPdaAccount = PublicKey.findProgramAddressSync(
+  //   [Buffer.from('bid'), bidder.publicKey.toBuffer(), listingPdaAccount.toBuffer()],
+  //   program.programId,
+  // )[0]
 
-  const bidVault = getAssociatedTokenAddressSync(
-    new anchor.web3.PublicKey(bidMint.publicKey),
-    bidPdaAccount,
-    true,
-    tokenProgram,
-  )
-  const bidSolVault = PublicKey.findProgramAddressSync(
-    [Buffer.from('solanavault'), bidPdaAccount.toBuffer()],
-    program.programId,
-  )[0]
-
-  //   const accounts = {
-  //   maker:maker.publicKey,
-  //   taker:taker.publicKey,
-  //   admin:admin.publicKey,
-  //   bidder:bidder.publicKey,
-  //   makerMint:makerMint.publicKey,
-  //   takerMint:takerMint.publicKey,
-  //   bidMint:bidMint.publicKey,
-  //   makerAtaMakerNft,
-  //   makerAtaTakerNft,
-  //   makerAtaBidNft,
-  //   takerAtaMakerNft,
-  //   takerAtaTakerNft,
-  //   bidAtaMakerNft,
-  //   bidAtaBidNft,
-  //   marketplacePdaAccount,
+  // const makerVault = getAssociatedTokenAddressSync(
+  //   new anchor.web3.PublicKey(makerMint.publicKey),
   //   listingPdaAccount,
-  //   treasuryPdaAccount,
-  //   makerVault,
-  //   makerSolVault,
-  //   bidVault,
-  //   bidSolVault
+  //   true,
+  //   tokenProgram,
+  // )
 
-  // }
+  // const makerSolVault = PublicKey.findProgramAddressSync(
+  //   [Buffer.from('solvault'), listingPdaAccount.toBuffer()],
+  //   program.programId,
+  // )[0]
+
+  // const bidVault = getAssociatedTokenAddressSync(
+  //   new anchor.web3.PublicKey(bidMint.publicKey),
+  //   bidPdaAccount,
+  //   true,
+  //   tokenProgram,
+  // )
+  // const bidSolVault = PublicKey.findProgramAddressSync(
+  //   [Buffer.from('solanavault'), bidPdaAccount.toBuffer()],
+  //   program.programId,
+  // )[0]
+
+  
 
   beforeAll(async () => {
-
     await airdrop(connection, new anchor.web3.PublicKey(creator.publicKey), 10).then(log)
   })
 
@@ -177,17 +158,13 @@ umi.use(signerIdentity(creator));
           toPubkey: account.publicKey,
           lamports: 10 * LAMPORTS_PER_SOL,
         }),
-
-        
       ),
-
-      
-      
     ]
 
     await provider.sendAndConfirm(tx).then(log)
   })
   it('Create Collection NFTs', async () => {
+    makerCollection = generateSigner(umi)
     await createNft(umi, {
       mint: makerCollection,
       name: 'Unbothered Apes',
@@ -200,8 +177,9 @@ umi.use(signerIdentity(creator));
         size: 100,
       },
     }).sendAndConfirm(umi)
-    console.log(`Created Collection NFT: ${makerCollection.publicKey.toString()}`)
+    console.log(`Created Maker Collection NFT: ${makerCollection.publicKey.toString()}`)
 
+    takerCollection = generateSigner(umi)
     await createNft(umi, {
       mint: takerCollection,
       name: 'Different Shades of Jeff',
@@ -214,8 +192,9 @@ umi.use(signerIdentity(creator));
         size: 100,
       },
     }).sendAndConfirm(umi)
-    console.log(`Created Collection NFT: ${takerCollection.publicKey.toString()}`)
+    console.log(`Created Taker Collection NFT: ${takerCollection.publicKey.toString()}`)
 
+    bidCollection = generateSigner(umi)
     await createNft(umi, {
       mint: bidCollection,
       name: 'Friendly Faces',
@@ -228,10 +207,11 @@ umi.use(signerIdentity(creator));
         size: 100,
       },
     }).sendAndConfirm(umi)
-    console.log(`Created Collection NFT: ${bidCollection.publicKey.toString()}`)
-  })
+    console.log(`Created Bidder Collection NFT: ${bidCollection.publicKey.toString()}`)
+  }, 1000000)
 
   it('Mint NFTs', async () => {
+    makerMint = generateSigner(umi)
     await createNft(umi, {
       mint: makerMint,
       name: 'Unbothered Ape 100',
@@ -244,8 +224,8 @@ umi.use(signerIdentity(creator));
         key: makerCollection.publicKey,
       },
     }).sendAndConfirm(umi)
-    console.log(`Created NFT: ${makerMint.publicKey.toString()}`)
-
+    console.log(`Created Maker NFT: ${makerMint.publicKey.toString()}`)
+    takerMint = generateSigner(umi)
     await createNft(umi, {
       mint: takerMint,
       name: 'Angry Jeff',
@@ -258,8 +238,9 @@ umi.use(signerIdentity(creator));
         key: takerCollection.publicKey,
       },
     }).sendAndConfirm(umi)
-    console.log(`Created NFT: ${takerMint.publicKey.toString()}`)
+    console.log(`Created Taker NFT: ${takerMint.publicKey.toString()}`)
 
+    bidMint = generateSigner(umi)
     await createNft(umi, {
       mint: bidMint,
       name: 'Friendly Face 15',
@@ -272,47 +253,47 @@ umi.use(signerIdentity(creator));
         key: bidCollection.publicKey,
       },
     }).sendAndConfirm(umi)
-    console.log(`Created NFT: ${bidMint.publicKey.toString()}`)
-  })
+    console.log(`Created Bidder NFT: ${bidMint.publicKey.toString()}`)
+  }, 1000000)
 
   it('Verify NFT', async () => {
-    const makerMetadata = findMetadataPda(umi, { mint: makerMint.publicKey })
-    const makerCollectionMetadata = findMetadataPda(umi, { mint: makerCollection.publicKey })
-    const makerMasterEdition = findMasterEditionPda(umi, { mint: makerCollection.publicKey })
+    const nftMetadata = findMetadataPda(umi, { mint: makerMint.publicKey })
+    const collectionMetadata = findMetadataPda(umi, { mint: makerCollection.publicKey })
+    const collectionMasterEdition = findMasterEditionPda(umi, { mint: makerCollection.publicKey })
 
     await verifySizedCollectionItem(umi, {
-      metadata: makerMetadata,
+      metadata: nftMetadata,
       collectionAuthority: creator,
       collectionMint: makerCollection.publicKey,
-      collection: makerCollectionMetadata,
-      collectionMasterEditionAccount: makerMasterEdition,
+      collection: collectionMetadata,
+      collectionMasterEditionAccount: collectionMasterEdition,
     }).sendAndConfirm(umi)
-    console.log('Nft Verified')
+    console.log('Maker Nft Verified')
 
-    const takerMetadata = findMetadataPda(umi, { mint: takerMint.publicKey })
-    const takerCollectionMetadata = findMetadataPda(umi, { mint: takerCollection.publicKey })
-    const takerMasterEdition = findMasterEditionPda(umi, { mint: takerCollection.publicKey })
+    const nftMetadataTaker = findMetadataPda(umi, { mint: takerMint.publicKey })
+    const collectionMetadataTaker = findMetadataPda(umi, { mint: takerCollection.publicKey })
+    const collectionMasterEditionTaker = findMasterEditionPda(umi, { mint: takerCollection.publicKey })
 
     await verifySizedCollectionItem(umi, {
-      metadata: takerMetadata,
+      metadata: nftMetadataTaker,
       collectionAuthority: creator,
       collectionMint: takerCollection.publicKey,
-      collection: takerCollectionMetadata,
-      collectionMasterEditionAccount: takerMasterEdition,
+      collection: collectionMetadataTaker,
+      collectionMasterEditionAccount: collectionMasterEditionTaker,
     }).sendAndConfirm(umi)
-    console.log('Nft Verified')
+    console.log('Taker Nft Verified')
 
-    const bidMetadata = findMetadataPda(umi, { mint: bidMint.publicKey })
-    const bidCollectionMetadata = findMetadataPda(umi, { mint: bidCollection.publicKey })
-    const bidMasterEdition = findMasterEditionPda(umi, { mint: bidCollection.publicKey })
+    const nftMetadataBid = findMetadataPda(umi, { mint: bidMint.publicKey })
+    const collectionMetadataBid = findMetadataPda(umi, { mint: bidCollection.publicKey })
+    const collectionMasterEditionBid = findMasterEditionPda(umi, { mint: takerCollection.publicKey })
 
     await verifySizedCollectionItem(umi, {
-      metadata: bidMetadata,
+      metadata: nftMetadataBid,
       collectionAuthority: creator,
       collectionMint: bidCollection.publicKey,
-      collection: bidCollectionMetadata,
-      collectionMasterEditionAccount: bidMasterEdition,
+      collection: collectionMetadataBid,
+      collectionMasterEditionAccount: collectionMasterEditionBid,
     }).sendAndConfirm(umi)
-    console.log('Nft Verified')
+    console.log('Bid Nft Verified')
   })
 })
