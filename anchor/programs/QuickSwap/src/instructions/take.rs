@@ -17,7 +17,8 @@ pub struct Take<'info>{
   
   #[account(mut)]
   pub taker: Signer<'info>,
-
+   
+  #[account(mut)] 
   pub maker:SystemAccount<'info>,
 
    pub admin: SystemAccount<'info>,
@@ -32,7 +33,7 @@ pub struct Take<'info>{
 
  
 
-#[account( seeds= [b"treasury", marketplace.key().as_ref()], bump= marketplace.treasury_bump)]
+#[account(mut, seeds= [b"treasury", marketplace.key().as_ref()], bump= marketplace.treasury_bump)]
 
  pub treasury: SystemAccount<'info>,
 
@@ -42,20 +43,20 @@ pub struct Take<'info>{
             associated_token::mint=maker_mint,
             associated_token::authority= taker,
             associated_token::token_program= token_program)]
-  pub taker_ata_a: InterfaceAccount<'info, TokenAccount>,
+  pub taker_ata_a: Box<InterfaceAccount<'info, TokenAccount>>,
 
   #[account(init_if_needed, 
             payer= taker, 
             associated_token::mint= taker_mint,
             associated_token::authority= maker,
             associated_token::token_program=token_program)]
-  pub maker_ata_b: InterfaceAccount<'info, TokenAccount>,
+  pub maker_ata_b: Box<InterfaceAccount<'info, TokenAccount>>,
 
   #[account(mut,
             associated_token::mint= taker_mint,
             associated_token::authority= taker,
             associated_token::token_program= token_program)]
-  pub taker_ata_b: InterfaceAccount<'info, TokenAccount>,
+  pub taker_ata_b: Box<InterfaceAccount<'info, TokenAccount>>,
 
   #[account(mut,
     seeds = [b"solvault", listing.key().as_ref()],
@@ -68,7 +69,7 @@ pub struct Take<'info>{
     associated_token::authority= listing,
     associated_token::token_program = token_program)]
    
-   pub vault: InterfaceAccount<'info, TokenAccount>,
+   pub vault: Box<InterfaceAccount<'info, TokenAccount>>,
 
 
   #[account(mut, close=maker, seeds=[b"listing", maker.key().as_ref(), listing.seed.to_le_bytes().as_ref(), marketplace.key().as_ref()], bump=listing.bump,

@@ -35,7 +35,7 @@ pub struct CancelBid<'info> {
     )]
     pub bid_vault: InterfaceAccount<'info, TokenAccount>,
 
-    #[account(
+    #[account(mut,
     seeds = [b"solanavault", bid.key().as_ref()],
     bump
    )]
@@ -77,7 +77,7 @@ impl <'info> CancelBid <'info>{
             from: self.bid_vault.to_account_info(),
             to: self.bidder_ata.to_account_info(),
             mint: self.bid_mint.to_account_info(),
-            authority: self.bidder.to_account_info(),
+            authority: self.bid.to_account_info(),
         };
          let seeds = [b"bid", self.bidder.to_account_info().key.as_ref(), &self.listing.to_account_info().key.as_ref(), &[self.bid.bump]];
 

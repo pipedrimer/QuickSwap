@@ -17,6 +17,7 @@ pub struct AcceptBid<'info> {
     #[account(mut)]
     pub maker: Signer<'info>,
 
+    #[account(mut)]
     pub bidder: SystemAccount<'info>,
 
      pub admin: SystemAccount<'info>,
@@ -58,22 +59,22 @@ pub struct AcceptBid<'info> {
             associated_token::mint=maker_mint,
             associated_token::authority= bidder,
             associated_token::token_program= token_program)]
-  pub bidder_ata_a: InterfaceAccount<'info, TokenAccount>,
+  pub bidder_ata_a: Box<InterfaceAccount<'info, TokenAccount>>,
 
    #[account(init_if_needed, 
             payer= maker, 
             associated_token::mint= bid_mint,
             associated_token::authority= maker,
             associated_token::token_program=token_program)]
-  pub maker_ata_b: InterfaceAccount<'info, TokenAccount>,
+  pub maker_ata_b: Box<InterfaceAccount<'info, TokenAccount>>,
 
 
     #[account(mut,
-         close=maker, seeds=[b"listing", maker.key().as_ref(), listing.seed.to_le_bytes().as_ref(), marketplace.key().as_ref()], bump=listing.bump,)]
+         close= maker, seeds=[b"listing", maker.key().as_ref(), listing.seed.to_le_bytes().as_ref(), marketplace.key().as_ref()], bump=listing.bump,)]
     pub listing: Account<'info, Listing>,
 
     #[account(mut,
-              close=bidder,
+              close= bidder,
               seeds=[b"bid", bidder.key().as_ref(), listing.key().as_ref()],bump=bid.bump,
               has_one=bidder,
               has_one=bid_mint
@@ -83,9 +84,10 @@ pub struct AcceptBid<'info> {
 
     #[account(seeds=[b"quickswap", admin.key().as_ref()], bump= marketplace.bump)]
     pub marketplace: Account<'info, Marketplace>,
-    #[account(seeds= [b"treasury", marketplace.key().as_ref()], bump= marketplace.treasury_bump)]
 
- pub treasury: SystemAccount<'info>,
+    #[account(mut, seeds= [b"treasury", marketplace.key().as_ref()], bump= marketplace.treasury_bump)]
+
+    pub treasury: SystemAccount<'info>,
 
   
 
@@ -193,6 +195,27 @@ impl <'info> AcceptBid <'info> {
                     CpiContext::new_with_signer(cpi_program, cpi_accounts, signer_seeds);
 
                 transfer(cpi_ctx, self.bid.sol_demand)?;
+
+                 if self.sol_vault.lamports() > 0{
+
+                      let balance = self.sol_vault.lamports();
+                       let cpi_program = self.system_program.to_account_info();
+                       let cpi_accounts = Transfer {
+                    from: self.sol_vault.to_account_info(),
+                    to: self.maker.to_account_info(),
+                };
+                let seeds = [
+                    b"solvault",
+                    self.listing.to_account_info().key.as_ref(),
+                    &[self.listing.solvault_bump],
+                ];
+                let signer_seeds = &[&seeds[..]];
+                let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer_seeds);
+
+                transfer(cpi_ctx, balance)?;
+                    
+
+                 }
             }
         } else {
                let fee = (self.marketplace.taker_fee_bps as u64)
@@ -298,7 +321,7 @@ impl <'info> AcceptBid <'info> {
 
     };
 
-     let seeds = [b"bid", self.bidder.to_account_info().key.as_ref(), &self.listing.to_account_info().key.as_ref(), &[self.bid.bump]];
+    let seeds = [b"bid", self.bidder.to_account_info().key.as_ref(), &self.listing.to_account_info().key.as_ref(), &[self.bid.bump]];
 
     let signer_seeds = &[&seeds[..]];
 
@@ -307,16 +330,6 @@ impl <'info> AcceptBid <'info> {
 
     close_account(ctx_cpi)?;
     
-
-    
-    **self.maker.to_account_info().try_borrow_mut_lamports()? += **self.sol_vault.to_account_info().lamports.borrow();
-    **self.sol_vault.to_account_info().try_borrow_mut_lamports()? = 0;
-
-    
-    **self.bidder.to_account_info().try_borrow_mut_lamports()? += **self.bid_sol_vault.to_account_info().lamports.borrow();
-    **self.bid_sol_vault.to_account_info().try_borrow_mut_lamports()? = 0;
-
-   
 
     Ok(())
     }

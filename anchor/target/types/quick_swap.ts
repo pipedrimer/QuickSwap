@@ -33,6 +33,7 @@ export type QuickSwap = {
         },
         {
           "name": "bidder",
+          "writable": true,
           "relations": [
             "bid"
           ]
@@ -414,6 +415,7 @@ export type QuickSwap = {
         },
         {
           "name": "treasury",
+          "writable": true,
           "pda": {
             "seeds": [
               {
@@ -539,6 +541,7 @@ export type QuickSwap = {
         },
         {
           "name": "bidSolVault",
+          "writable": true,
           "pda": {
             "seeds": [
               {
@@ -802,6 +805,7 @@ export type QuickSwap = {
         },
         {
           "name": "bidSolVault",
+          "writable": true,
           "pda": {
             "seeds": [
               {
@@ -988,11 +992,11 @@ export type QuickSwap = {
               },
               {
                 "kind": "account",
-                "path": "bidMint"
+                "path": "metadataProgram"
               },
               {
                 "kind": "account",
-                "path": "metadataProgram"
+                "path": "bidMint"
               }
             ],
             "program": {
@@ -1020,11 +1024,11 @@ export type QuickSwap = {
               },
               {
                 "kind": "account",
-                "path": "bidMint"
+                "path": "metadataProgram"
               },
               {
                 "kind": "account",
-                "path": "metadataProgram"
+                "path": "bidMint"
               },
               {
                 "kind": "const",
@@ -1745,6 +1749,7 @@ export type QuickSwap = {
         },
         {
           "name": "maker",
+          "writable": true,
           "relations": [
             "listing"
           ]
@@ -1766,6 +1771,7 @@ export type QuickSwap = {
         },
         {
           "name": "treasury",
+          "writable": true,
           "pda": {
             "seeds": [
               {

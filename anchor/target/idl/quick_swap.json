@@ -27,6 +27,7 @@
         },
         {
           "name": "bidder",
+          "writable": true,
           "relations": [
             "bid"
           ]
@@ -408,6 +409,7 @@
         },
         {
           "name": "treasury",
+          "writable": true,
           "pda": {
             "seeds": [
               {
@@ -533,6 +535,7 @@
         },
         {
           "name": "bid_sol_vault",
+          "writable": true,
           "pda": {
             "seeds": [
               {
@@ -796,6 +799,7 @@
         },
         {
           "name": "bid_sol_vault",
+          "writable": true,
           "pda": {
             "seeds": [
               {
@@ -982,11 +986,11 @@
               },
               {
                 "kind": "account",
-                "path": "bid_mint"
+                "path": "metadata_program"
               },
               {
                 "kind": "account",
-                "path": "metadata_program"
+                "path": "bid_mint"
               }
             ],
             "program": {
@@ -1014,11 +1018,11 @@
               },
               {
                 "kind": "account",
-                "path": "bid_mint"
+                "path": "metadata_program"
               },
               {
                 "kind": "account",
-                "path": "metadata_program"
+                "path": "bid_mint"
               },
               {
                 "kind": "const",
@@ -1739,6 +1743,7 @@
         },
         {
           "name": "maker",
+          "writable": true,
           "relations": [
             "listing"
           ]
@@ -1760,6 +1765,7 @@
         },
         {
           "name": "treasury",
+          "writable": true,
           "pda": {
             "seeds": [
               {

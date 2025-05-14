@@ -9,7 +9,8 @@ import {
   findMetadataPda,
   MPL_TOKEN_METADATA_PROGRAM_ID,
   mplTokenMetadata,
-  setAndVerifySizedCollectionItem,
+  // setAndVerifySizedCollectionItem,
+  verifySizedCollectionItem,
 } from '@metaplex-foundation/mpl-token-metadata'
 import {
   createSignerFromKeypair,
@@ -21,7 +22,7 @@ import {
 } from '@metaplex-foundation/umi'
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
-  TOKEN_2022_PROGRAM_ID,
+  TOKEN_PROGRAM_ID,
   getAssociatedTokenAddressSync,
   getOrCreateAssociatedTokenAccount,
   transfer,
@@ -37,13 +38,13 @@ describe('QuickSwap', () => {
 
   const program = anchor.workspace.QuickSwap as Program<QuickSwap>
 
-  const programId = program.programId
+  // const programId = program.programId
 
-  const tokenProgram = TOKEN_2022_PROGRAM_ID
+  const tokenProgram = TOKEN_PROGRAM_ID
 
   const associatedTokenProgram = ASSOCIATED_TOKEN_PROGRAM_ID
 
-  const metadataProgram =MPL_TOKEN_METADATA_PROGRAM_ID
+  const metadataProgram = MPL_TOKEN_METADATA_PROGRAM_ID
 
   const umi = createUmi(provider.connection)
 
@@ -70,11 +71,10 @@ describe('QuickSwap', () => {
 
   const seed = new BN(randomBytes(8))
 
-  const fee = 5;
-  const sol_demand= new BN(100000);
-  let sol_deposit;
-   let collection_requested;
-
+  const fee = 5
+  const sol_demand = new BN(100000)
+  let sol_deposit
+  let collection_requested
 
   // const [makerMintPk, takerMintPk, bidMintPk] = [makerMint, takerMint, bidMint].map((a)=> new PublicKey(a.publicKey.))
   //create nft creator wallet
@@ -88,14 +88,16 @@ describe('QuickSwap', () => {
   let marketplacePdaAccount: PublicKey
   let listingPdaAccount: PublicKey
   let treasuryPdaAccount: PublicKey
+  let bidPdaAccount: PublicKey
   let makerAtaA: PublicKey
-  let makerAtaB:PublicKey
-  let takerAtaA:PublicKey
-  let takerAtaB:PublicKey
+  let makerAtaB: PublicKey
+  let takerAtaA: PublicKey
+  let takerAtaB: PublicKey
+  let bidderAtaBid: PublicKey
+  let bidVault: PublicKey
+  let bidSolVault: PublicKey
   let makerVault: PublicKey
   let makerSolVault: PublicKey
-  
-
 
   const [maker, taker, admin, bidder] = Array.from({ length: 4 }, () => Keypair.generate())
 
@@ -114,29 +116,7 @@ describe('QuickSwap', () => {
   //   )
   //   .flat()
 
-  // const [makerAtaMaker, makerAtaBidNft, bidAtaMakerNft, bidAtaBidNft] = [maker, bidder]
-  //   .map((a) =>
-  //     [makerMint, bidMint].map((b) =>
-  //       getAssociatedTokenAddressSync(new anchor.web3.PublicKey(b.publicKey), a.publicKey, false, tokenProgram),
-  //     ),
-  //   )
-  //   .flat()
-
-  // const bidPdaAccount = PublicKey.findProgramAddressSync(
-  //   [Buffer.from('bid'), bidder.publicKey.toBuffer(), listingPdaAccount.toBuffer()],
-  //   program.programId,
-  // )[0]
-
-  // const bidVault = getAssociatedTokenAddressSync(
-  //   new anchor.web3.PublicKey(bidMint.publicKey),
-  //   bidPdaAccount,
-  //   true,
-  //   tokenProgram,
-  // )
-  // const bidSolVault = PublicKey.findProgramAddressSync(
-  //   [Buffer.from('solanavault'), bidPdaAccount.toBuffer()],
-  //   program.programId,
-  // )[0]
+  
 
   beforeAll(async () => {
     await airdrop(connection, new anchor.web3.PublicKey(creator.publicKey), 10).then(log)
@@ -147,11 +127,11 @@ describe('QuickSwap', () => {
     const tx = new Transaction()
 
     tx.instructions = [
-      ...[maker, taker, bidder].map((account) =>
+      ...[maker, taker, bidder, admin].map((account) =>
         SystemProgram.transfer({
           fromPubkey: provider.publicKey,
           toPubkey: account.publicKey,
-          lamports: 10 * LAMPORTS_PER_SOL,
+          lamports: 100 * LAMPORTS_PER_SOL,
         }),
       ),
     ]
@@ -252,11 +232,11 @@ describe('QuickSwap', () => {
   }, 1000000)
 
   it('Verify NFT', async () => {
-     const nftMetadata = findMetadataPda(umi, { mint: makerMint.publicKey })
+    const nftMetadata = findMetadataPda(umi, { mint: makerMint.publicKey })
     const collectionMetadata = findMetadataPda(umi, { mint: makerCollection.publicKey })
     const collectionMasterEdition = findMasterEditionPda(umi, { mint: makerCollection.publicKey })
 
-    await setAndVerifySizedCollectionItem(umi, {
+    await verifySizedCollectionItem(umi, {
       metadata: nftMetadata,
       collectionAuthority: creator,
       collectionMint: makerCollection.publicKey,
@@ -269,7 +249,7 @@ describe('QuickSwap', () => {
     const collectionMetadataTaker = findMetadataPda(umi, { mint: takerCollection.publicKey })
     const collectionMasterEditionTaker = findMasterEditionPda(umi, { mint: takerCollection.publicKey })
 
-    await setAndVerifySizedCollectionItem(umi, {
+    await verifySizedCollectionItem(umi, {
       metadata: nftMetadataTaker,
       collectionAuthority: creator,
       collectionMint: takerCollection.publicKey,
@@ -282,7 +262,7 @@ describe('QuickSwap', () => {
     const collectionMetadataBid = findMetadataPda(umi, { mint: bidCollection.publicKey })
     const collectionMasterEditionBid = findMasterEditionPda(umi, { mint: bidCollection.publicKey })
 
-    await setAndVerifySizedCollectionItem(umi, {
+    await verifySizedCollectionItem(umi, {
       metadata: nftMetadataBid,
       collectionAuthority: creator,
       collectionMint: bidCollection.publicKey,
@@ -329,6 +309,8 @@ describe('QuickSwap', () => {
       program.programId,
     )[0]
 
+    await airdrop(connection, treasuryPdaAccount, 10).then(log)
+
     await program.methods
       .initialize(fee)
       .accountsPartial({
@@ -342,6 +324,7 @@ describe('QuickSwap', () => {
       .then(confirm)
       .then(log)
   })
+
   it('List NFT', async () => {
     makerAtaA = getAssociatedTokenAddressSync(
       new anchor.web3.PublicKey(makerMint.publicKey),
@@ -369,102 +352,248 @@ describe('QuickSwap', () => {
       [Buffer.from('solvault'), listingPdaAccount.toBuffer()],
       program.programId,
     )[0]
+
+    await airdrop(connection, makerSolVault, 1)
+
     sol_deposit = new BN(0)
-    collection_requested= takerCollection.publicKey.toString()
+    collection_requested = takerCollection.publicKey.toString()
 
-   const [makerMetadata] =findMetadataPda(umi, { mint: makerMint.publicKey })
-   const [makerMasterEdition]= findMasterEditionPda(umi, { mint: makerMint.publicKey })
+    const [makerMetadata] = findMetadataPda(umi, { mint: makerMint.publicKey })
+    const [makerMasterEdition] = findMasterEditionPda(umi, { mint: makerMint.publicKey })
 
     await program.methods
-    .listing(seed,sol_deposit,sol_demand,collection_requested)
-    .accountsPartial({maker:maker.publicKey,
-                      admin:admin.publicKey,
-                      marketplace:marketplacePdaAccount,
-                      listing:listingPdaAccount,
-                      makerMint:makerMint.publicKey,
-                      makerAtaA:makerAtaA,
-                      vault:makerVault,
-                      makerCollection:makerCollection.publicKey,
-                      solVault:makerSolVault,
-                      metadata:makerMetadata,
-                      masterEdition:makerMasterEdition,
-                      systemProgram: anchor.web3.SystemProgram.programId,
-                      tokenProgram:tokenProgram,
-                      associatedTokenProgram:associatedTokenProgram,
-                      metadataProgram:metadataProgram})
-  .signers([maker])
-  .rpc()
-  .then(confirm)
-  .then(log)
-  })
-  it('Buy NFT', async () => {
-  try {
-    [makerAtaA, makerAtaB, takerAtaA, takerAtaB] = [maker, taker]
-      .map((a) =>
-        [makerMint, takerMint].map((b) =>
-          getAssociatedTokenAddressSync(new anchor.web3.PublicKey(b.publicKey), a.publicKey, false, tokenProgram),
-        ),
-      )
-      .flat();
-
-    const [takerMetadata] = findMetadataPda(umi, { mint: takerMint.publicKey });
-    
-    console.log("📦 Account Addresses:");
-console.log("maker:", maker.publicKey.toBase58());
-console.log("taker:", taker.publicKey.toBase58());
-console.log("admin:", admin.publicKey.toBase58());
-console.log("takerAtaA:", takerAtaA.toBase58());
-console.log("takerAtaB:", takerAtaB.toBase58());
-console.log("makerAtaB:", makerAtaB.toBase58());
-console.log("takerCollection:", takerCollection.publicKey);
-console.log("marketplace:", marketplacePdaAccount.toBase58());
-console.log("listing:", listingPdaAccount.toBase58());
-console.log("makerMint:", makerMint.publicKey);
-console.log("takerMint:", takerMint.publicKey);
-console.log("treasury:", treasuryPdaAccount.toBase58());
-console.log("vault:", makerVault.toBase58());
-console.log("solVault:", makerSolVault.toBase58());
-console.log("metadata:", takerMetadata.toString());
-console.log("systemProgram:", anchor.web3.SystemProgram.programId.toBase58());
-console.log("tokenProgram:", tokenProgram.toBase58());
-console.log("associatedTokenProgram:", associatedTokenProgram.toBase58());
-console.log("metadataProgram:", metadataProgram);
-    await program.methods
-      .takeListing()
+      .listing(seed, sol_deposit, sol_demand, collection_requested)
       .accountsPartial({
         maker: maker.publicKey,
-        taker: taker.publicKey,
         admin: admin.publicKey,
-        takerAtaA: takerAtaA,
-        takerAtaB: takerAtaB,
-        makerAtaB: makerAtaB,
-        takerCollection: takerCollection.publicKey,
         marketplace: marketplacePdaAccount,
         listing: listingPdaAccount,
         makerMint: makerMint.publicKey,
-        takerMint: takerMint.publicKey,
-        treasury: treasuryPdaAccount,
+        makerAtaA: makerAtaA,
         vault: makerVault,
+        makerCollection: makerCollection.publicKey,
         solVault: makerSolVault,
-        metadata: takerMetadata,
+        metadata: makerMetadata,
+        masterEdition: makerMasterEdition,
         systemProgram: anchor.web3.SystemProgram.programId,
         tokenProgram: tokenProgram,
         associatedTokenProgram: associatedTokenProgram,
         metadataProgram: metadataProgram,
       })
-      .signers([taker])
+      .signers([maker])
       .rpc()
       .then(confirm)
-      .then(log);
-  } catch (e) {
-    console.error('Transaction failed:', e);
+      .then(log)
+  })
 
-    // If it's a SendTransactionError from Anchor
-    if (e.logs) {
-      console.log('Transaction logs:', e.logs);
+  xit('Take Barter NFT Trade', async () => {
+    try {
+      ;[makerAtaA, makerAtaB, takerAtaA, takerAtaB] = [maker, taker]
+        .map((a) =>
+          [makerMint, takerMint].map((b) =>
+            getAssociatedTokenAddressSync(new anchor.web3.PublicKey(b.publicKey), a.publicKey, false, tokenProgram),
+          ),
+        )
+        .flat()
+
+      const [takerMetadata] = findMetadataPda(umi, { mint: takerMint.publicKey })
+
+      await program.methods
+        .takeListing()
+        .accountsPartial({
+          maker: maker.publicKey,
+          taker: taker.publicKey,
+          admin: admin.publicKey,
+          takerAtaA: takerAtaA,
+          takerAtaB: takerAtaB,
+          makerAtaB: makerAtaB,
+          takerCollection: takerCollection.publicKey,
+          marketplace: marketplacePdaAccount,
+          listing: listingPdaAccount,
+          makerMint: makerMint.publicKey,
+          takerMint: takerMint.publicKey,
+          treasury: treasuryPdaAccount,
+          vault: makerVault,
+          solVault: makerSolVault,
+          metadata: takerMetadata,
+          systemProgram: anchor.web3.SystemProgram.programId,
+          tokenProgram: tokenProgram,
+          associatedTokenProgram: associatedTokenProgram,
+          metadataProgram: metadataProgram,
+        })
+        .signers([taker])
+        .rpc()
+        .then(confirm)
+        .then(log)
+    } catch (e) {
+      console.error('Transaction failed:', e)
+
+      // If it's a SendTransactionError from Anchor
+      if (e.logs) {
+        console.log('Transaction logs:', e.logs)
+      }
+
+      throw e
     }
+  })
 
-    throw e; // rethrow to let test runner catch it
-  }
-});
+  xit('Delist', async () => {
+    try {
+      await program.methods
+        .delist()
+        .accountsPartial({
+          maker: maker.publicKey,
+          admin: admin.publicKey,
+          makerAtaA: makerAtaA,
+          marketplace: marketplacePdaAccount,
+          listing: listingPdaAccount,
+          makerMint: makerMint.publicKey,
+          vault: makerVault,
+          solVault: makerSolVault,
+          systemProgram: anchor.web3.SystemProgram.programId,
+          tokenProgram: tokenProgram,
+          associatedTokenProgram: associatedTokenProgram,
+        })
+        .signers([maker])
+        .rpc()
+        .then(confirm)
+        .then(log)
+    } catch (e) {
+      console.error('Transaction failed:', e)
+
+      // If it's a SendTransactionError from Anchor
+      if (e.logs) {
+        console.log('Transaction logs:', e.logs)
+      }
+
+      throw e
+    }
+  })
+
+  it('Make Bid', async () => {
+    bidPdaAccount = PublicKey.findProgramAddressSync(
+      [Buffer.from('bid'), bidder.publicKey.toBuffer(), listingPdaAccount.toBuffer()],
+      program.programId,
+    )[0]
+
+    bidderAtaBid = getAssociatedTokenAddressSync(
+      new anchor.web3.PublicKey(bidMint.publicKey),
+      bidder.publicKey,
+      true,
+      tokenProgram,
+    )
+    bidVault = getAssociatedTokenAddressSync(
+      new anchor.web3.PublicKey(bidMint.publicKey),
+      bidPdaAccount,
+      true,
+      tokenProgram,
+    )
+    bidSolVault = PublicKey.findProgramAddressSync(
+      [Buffer.from('solanavault'), bidPdaAccount.toBuffer()],
+      program.programId,
+    )[0]
+
+    await airdrop(connection, bidSolVault, 1)
+
+    const [bidMetadata] = findMetadataPda(umi, { mint: bidMint.publicKey })
+
+    const [bidEdition] = findMasterEditionPda(umi, { mint: bidMint.publicKey })
+
+    sol_deposit = new BN(1000)
+    const sol_demanded = new BN(0)
+
+    await program.methods
+      .createBid(sol_demanded, sol_deposit)
+      .accountsPartial({
+        maker: maker.publicKey,
+        bidder: bidder.publicKey,
+        admin: admin.publicKey,
+        bidderAtaB: bidderAtaBid,
+        bidCollection: bidCollection.publicKey,
+        marketplace: marketplacePdaAccount,
+        listing: listingPdaAccount,
+        bidVault: bidVault,
+        bidSolVault: bidSolVault,
+        bid: bidPdaAccount,
+        bidMint: bidMint.publicKey,
+        metadata: bidMetadata,
+        masterEdition: bidEdition,
+        systemProgram: anchor.web3.SystemProgram.programId,
+        tokenProgram: tokenProgram,
+        associatedTokenProgram: associatedTokenProgram,
+        metadataProgram: metadataProgram,
+      })
+      .signers([bidder])
+      .rpc()
+      .then(confirm)
+      .then(log)
+  })
+
+  xit('Cancel Bid', async () => {
+    await program.methods
+      .cancelBid()
+      .accountsPartial({
+        maker: maker.publicKey,
+        bidder: bidder.publicKey,
+        admin: admin.publicKey,
+        bidderAta: bidderAtaBid,
+        makerMint: makerMint.publicKey,
+        marketplace: marketplacePdaAccount,
+        listing: listingPdaAccount,
+        bidVault: bidVault,
+        bidSolVault: bidSolVault,
+        bid: bidPdaAccount,
+        bidMint: bidMint.publicKey,
+        systemProgram: anchor.web3.SystemProgram.programId,
+        tokenProgram: tokenProgram,
+        associatedTokenProgram: associatedTokenProgram,
+      })
+      .signers([bidder])
+      .rpc()
+      .then(confirm)
+      .then(log)
+  })
+
+
+  it('Accept Bid', async () => {
+     
+     const makerAtaBid = getAssociatedTokenAddressSync(
+      new anchor.web3.PublicKey(bidMint.publicKey),
+      maker.publicKey,
+      false,
+      tokenProgram,
+    )
+    const bidAtaMaker = getAssociatedTokenAddressSync(
+      new anchor.web3.PublicKey(makerMint.publicKey),
+      bidder.publicKey,
+      false,
+      tokenProgram,
+    )
+      
+      await program.methods
+        .acceptBid()
+        .accountsPartial({
+          maker: maker.publicKey,
+          bidder: bidder.publicKey,
+          admin: admin.publicKey,
+          makerAtaB:  makerAtaBid,
+          bidderAtaA:bidAtaMaker,
+          marketplace: marketplacePdaAccount,
+          listing: listingPdaAccount,
+          bidVault: bidVault,
+          bidSolVault: bidSolVault,
+          vault:makerVault,
+          solVault:makerSolVault,
+          bid: bidPdaAccount,
+          bidMint: bidMint.publicKey,
+          makerMint:makerMint.publicKey,
+          systemProgram: anchor.web3.SystemProgram.programId,
+          tokenProgram: tokenProgram,
+          associatedTokenProgram: associatedTokenProgram,
+        })
+        .signers([maker])
+        .rpc()
+        .then(confirm)
+        .then(log)
+  })
 })

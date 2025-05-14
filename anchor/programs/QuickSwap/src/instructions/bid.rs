@@ -22,7 +22,6 @@ pub struct PlaceBid<'info> {
 
      pub admin: SystemAccount<'info>,
 
-    #[account(address = bid.bid_mint)]
     pub bid_mint: InterfaceAccount<'info, Mint>,
 
     #[account(
@@ -35,7 +34,7 @@ pub struct PlaceBid<'info> {
     )]
     pub bid_vault: InterfaceAccount<'info, TokenAccount>,
 
-    #[account(
+    #[account(mut,
     seeds = [b"solanavault", bid.key().as_ref()],
     bump
    )]
@@ -62,7 +61,7 @@ pub struct PlaceBid<'info> {
     pub marketplace: Account<'info, Marketplace>,
 
     #[account(
-    seeds= [b"metadata", bid_mint.key().as_ref(), metadata_program.key().as_ref()],
+    seeds= [b"metadata",metadata_program.key().as_ref(), bid_mint.key().as_ref()],
     bump,
 
     seeds::program= metadata_program.key(),
@@ -73,15 +72,15 @@ pub struct PlaceBid<'info> {
 
     #[account(
         seeds=[b"metadata",
-        bid_mint.key().as_ref(), 
         metadata_program.key().as_ref(),
+        bid_mint.key().as_ref(), 
         b"edition"],
         seeds::program = metadata_program.key(),
         bump,
 
 
     )]
-   pub master_edition: Account<'info, MasterEditionAccount>,
+    pub master_edition: Account<'info, MasterEditionAccount>,
 
     pub metadata_program: Program<'info, Metadata>,
     pub token_program: Interface<'info, TokenInterface>,
