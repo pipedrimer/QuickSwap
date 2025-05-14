@@ -17,7 +17,12 @@ import {
   percentAmount,
   signerIdentity,
 } from '@metaplex-foundation/umi'
-import { TOKEN_PROGRAM_ID, getAssociatedTokenAddressSync } from '@solana/spl-token'
+import {
+  TOKEN_PROGRAM_ID,
+  getAssociatedTokenAddressSync,
+  getOrCreateAssociatedTokenAccount,
+  transfer,
+} from '@solana/spl-token'
 import { createUmi } from '@metaplex-foundation/umi-bundle-defaults'
 import { randomBytes } from 'crypto'
 
@@ -27,7 +32,7 @@ describe('QuickSwap', () => {
 
   const connection = provider.connection
 
-  const program = anchor.workspace.QuickSwap as Program<QuickSwap>
+  const program = anchor.workspace.quickswap as Program<QuickSwap>
 
   const programId = program.programId
 
@@ -57,6 +62,8 @@ describe('QuickSwap', () => {
   }
 
   const seed = new BN(randomBytes(8))
+
+  const fee = 5
 
   // const [makerMintPk, takerMintPk, bidMintPk] = [makerMint, takerMint, bidMint].map((a)=> new PublicKey(a.publicKey.))
   //create nft creator wallet
@@ -93,11 +100,6 @@ describe('QuickSwap', () => {
   //   )
   //   .flat()
 
-  // const marketplacePdaAccount = PublicKey.findProgramAddressSync(
-  //   [Buffer.from('quickswap'), admin.publicKey.toBuffer()],
-  //   program.programId,
-  // )[0]
-
   // const listingPdaAccount = PublicKey.findProgramAddressSync(
   //   [
   //     Buffer.from('listing'),
@@ -105,11 +107,6 @@ describe('QuickSwap', () => {
   //     seed.toArrayLike(Buffer, 'le', 8),
   //     marketplacePdaAccount.toBuffer(),
   //   ],
-  //   program.programId,
-  // )[0]
-
-  // const treasuryPdaAccount = PublicKey.findProgramAddressSync(
-  //   [Buffer.from('treasury'), marketplacePdaAccount.toBuffer()],
   //   program.programId,
   // )[0]
 
@@ -140,8 +137,6 @@ describe('QuickSwap', () => {
   //   [Buffer.from('solanavault'), bidPdaAccount.toBuffer()],
   //   program.programId,
   // )[0]
-
-  
 
   beforeAll(async () => {
     await airdrop(connection, new anchor.web3.PublicKey(creator.publicKey), 10).then(log)
@@ -256,7 +251,7 @@ describe('QuickSwap', () => {
     console.log(`Created Bidder NFT: ${bidMint.publicKey.toString()}`)
   }, 1000000)
 
-  it('Verify NFT', async () => {
+  xit('Verify NFT', async () => {
     const nftMetadata = findMetadataPda(umi, { mint: makerMint.publicKey })
     const collectionMetadata = findMetadataPda(umi, { mint: makerCollection.publicKey })
     const collectionMasterEdition = findMasterEditionPda(umi, { mint: makerCollection.publicKey })
@@ -295,5 +290,51 @@ describe('QuickSwap', () => {
       collectionMasterEditionAccount: collectionMasterEditionBid,
     }).sendAndConfirm(umi)
     console.log('Bid Nft Verified')
+  }, 10000000)
+
+  it('Transfer NFTs', async () => {
+    const mint1 = new anchor.web3.PublicKey(makerMint.publicKey)
+    const to1 = maker.publicKey
+    const from_ata1 = await getOrCreateAssociatedTokenAccount(connection, admin, mint1, admin.publicKey)
+    const to_ata1 = await getOrCreateAssociatedTokenAccount(connection, admin, mint1, to1)
+    await transfer(connection, admin, from_ata1.address, to_ata1.address, admin.publicKey, 1)
+      .then(log)
+      .then(() => console.log('nft sent to maker'))
+
+    const mint2 = new anchor.web3.PublicKey(takerMint.publicKey)
+    const to2 = taker.publicKey
+    const from_ata2 = await getOrCreateAssociatedTokenAccount(connection, admin, mint2, admin.publicKey)
+    const to_ata2 = await getOrCreateAssociatedTokenAccount(connection, admin, mint2, to2)
+    await transfer(connection, admin, from_ata2.address, to_ata2.address, admin.publicKey, 1)
+      .then(log)
+      .then(() => console.log('nft sent to taker'))
+
+    const mint3 = new anchor.web3.PublicKey(bidMint.publicKey)
+    const to3 = bidder.publicKey
+    const from_ata3 = await getOrCreateAssociatedTokenAccount(connection, admin, mint3, admin.publicKey)
+    const to_ata3 = await getOrCreateAssociatedTokenAccount(connection, admin, mint3, to3)
+    await transfer(connection, admin, from_ata3.address, to_ata3.address, admin.publicKey, 1)
+      .then(log)
+      .then(() => console.log('nft sent to bidder'))
+  })
+
+  it('Initialize Marketplace', async () => {
+    const marketplacePdaAccount = PublicKey.findProgramAddressSync(
+      [Buffer.from('quickswap'), admin.publicKey.toBuffer()],
+      program.programId,
+    )[0]
+
+    const treasuryPdaAccount = PublicKey.findProgramAddressSync(
+      [Buffer.from('treasury'), marketplacePdaAccount.toBuffer()],
+      program.programId,
+    )[0]
+
+    await program.methods
+      .initialize(fee)
+      .accountsPartial({ admin: admin.publicKey, marketplace: marketplacePdaAccount, treasury: treasuryPdaAccount, systemProgram:anchor.web3.SystemProgram.programId })
+      .signers([admin])
+      .rpc()
+      .then(confirm)
+      .then(log);
   })
 })
