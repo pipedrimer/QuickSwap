@@ -32,7 +32,7 @@ pub struct Take<'info>{
 
  
 
-#[account(seeds= [b"treasury", marketplace.key().as_ref()], bump= marketplace.treasury_bump)]
+#[account( seeds= [b"treasury", marketplace.key().as_ref()], bump= marketplace.treasury_bump)]
 
  pub treasury: SystemAccount<'info>,
 
@@ -81,7 +81,7 @@ pub struct Take<'info>{
   pub marketplace: Account<'info , Marketplace>,
 
    #[account(
-    seeds= [b"metadata", taker_mint.key().as_ref(), metadata_program.key().as_ref()],
+    seeds= [b"metadata", metadata_program.key().as_ref(), taker_mint.key().as_ref() ],
     bump,
 
     seeds::program= metadata_program.key(),

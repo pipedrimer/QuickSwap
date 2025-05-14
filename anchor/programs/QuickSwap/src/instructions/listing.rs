@@ -55,7 +55,7 @@ pub struct List<'info> {
 
     
     #[account(
-        seeds= [b"metadata", maker_mint.key().as_ref(), metadata_program.key().as_ref()],
+        seeds= [b"metadata", metadata_program.key().as_ref(), maker_mint.key().as_ref() ],
         bump,
 
         seeds::program= metadata_program.key(),
@@ -66,8 +66,8 @@ pub struct List<'info> {
     pub metadata: Account<'info, MetadataAccount>,
     #[account(
         seeds=[b"metadata",
-        maker_mint.key().as_ref(), 
         metadata_program.key().as_ref(),
+        maker_mint.key().as_ref(),  
         b"edition"],
         seeds::program = metadata_program.key(),
         bump,

@@ -1633,11 +1633,11 @@ export type QuickSwap = {
               },
               {
                 "kind": "account",
-                "path": "makerMint"
+                "path": "metadataProgram"
               },
               {
                 "kind": "account",
-                "path": "metadataProgram"
+                "path": "makerMint"
               }
             ],
             "program": {
@@ -1665,11 +1665,11 @@ export type QuickSwap = {
               },
               {
                 "kind": "account",
-                "path": "makerMint"
+                "path": "metadataProgram"
               },
               {
                 "kind": "account",
-                "path": "metadataProgram"
+                "path": "makerMint"
               },
               {
                 "kind": "const",
@@ -2118,11 +2118,11 @@ export type QuickSwap = {
               },
               {
                 "kind": "account",
-                "path": "takerMint"
+                "path": "metadataProgram"
               },
               {
                 "kind": "account",
-                "path": "metadataProgram"
+                "path": "takerMint"
               }
             ],
             "program": {

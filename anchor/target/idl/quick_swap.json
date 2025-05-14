@@ -1627,11 +1627,11 @@
               },
               {
                 "kind": "account",
-                "path": "maker_mint"
+                "path": "metadata_program"
               },
               {
                 "kind": "account",
-                "path": "metadata_program"
+                "path": "maker_mint"
               }
             ],
             "program": {
@@ -1659,11 +1659,11 @@
               },
               {
                 "kind": "account",
-                "path": "maker_mint"
+                "path": "metadata_program"
               },
               {
                 "kind": "account",
-                "path": "metadata_program"
+                "path": "maker_mint"
               },
               {
                 "kind": "const",
@@ -2112,11 +2112,11 @@
               },
               {
                 "kind": "account",
-                "path": "taker_mint"
+                "path": "metadata_program"
               },
               {
                 "kind": "account",
-                "path": "metadata_program"
+                "path": "taker_mint"
               }
             ],
             "program": {
