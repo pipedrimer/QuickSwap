@@ -233,9 +233,7 @@ require!(
      let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts , signer_seeds);
      transfer(cpi_ctx, fee)?;
 
-    fee_transferred =true;
-
-    }
+    fee_transferred =true;}
 
     if !fee_transferred 
     {
