@@ -8,12 +8,19 @@ skip-lint = false
 [programs.localnet]
 quickswap = "G5HbQhYdUkEVRqCywp9te8EvNgLCb3Zj8LqnAUzX5rnK"
 
+[programs.devnet]
+quickswap = "86rSePYFgtgHyBQviSb92FKow1nupL2sGhA4pTVadwC7"
+
+[programs.mainnet]
+quickswap = "G5HbQhYdUkEVRqCywp9te8EvNgLCb3Zj8LqnAUzX5rnK"
+
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "Localnet"
-wallet = "~/.config/solana/id.json"
+cluster = "devnet"
+wallet = "wallet.json"
+# "~/.config/solana/id.json"
 
 [scripts]
 test = "../node_modules/.bin/jest --preset ts-jest"
