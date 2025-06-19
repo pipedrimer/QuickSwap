@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react"
-import { Search, Wallet } from "lucide-react"
+import { Search } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../component/tabs"
 import { NFTCard } from "../component/nftcard"
 import { Trade } from "../component/trade"
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui'
-import { Button } from "@/component/button"
+import { Button } from "../component/button"
 // import { FilterSidebar } from "@/components/filter-sidebar"
 
 // Mock data for NFT offers
@@ -202,15 +202,24 @@ export default function TradePage() {
                 </div>
               </TabsContent>
             </Tabs>
+{selectedNFTs.length > 0 && (
+  <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center">
+    {/* <p className="relative w-5/6 l bg-white text-black p-6 rounded-2xl shadow-2xl"> */}
+      {/* Close Button */}
+     
+    <div className=" flex items-center   justify-center">
+      {/* Trade Component */}
+      <Trade
+        selectedNFTs={selectedNFTs}
+        onRemoveNFT={(id) =>
+          setSelectedNFTs(selectedNFTs.filter((nft) => nft.id !== id))
+        }
+      />
+      </div>
+    {/* </p> */}
+  </div>
+)}
 
-            {selectedNFTs.length > 0 && (
-              <Trade
-                selectedNFTs={selectedNFTs}
-                onRemoveNFT={(id) => {
-                  setSelectedNFTs(selectedNFTs.filter((nft) => nft.id !== id))
-                }}
-              />
-            )}
           </div>
         </main>
       </div>

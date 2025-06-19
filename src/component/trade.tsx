@@ -46,19 +46,18 @@ export const Trade = ({ selectedNFTs, onRemoveNFT }: TradeBuilderProps) => {
     
     
     return  (
-    <div className="fixed bottom-0 left-0 right-0 bg-gray-950 border-t border-gray-800 p-4 z-20">
+    <div className="fixed bottom-0 left-0 right-0 bg-gray-950 border-t border-gray-800 p-4 z-20 w-3/5 h-2/3  text-black rounded-2xl shadow-2xl overflow-auto ">
       <div className="container mx-auto">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-bold">Trade Builder</h2>
           <button
              
-            className="text-gray-400 hover:text-white"
+           className="absolute top-3 right-3 text-gray-500 hover:text-red-500 text-2xl font-bold"
             onClick={() => {
               selectedNFTs.forEach((nft) => onRemoveNFT(nft.id))
             }}
           >
-            <X className="h-4 w-4 mr-1" />
-            Clear
+             &times;
           </button>
         </div>
 

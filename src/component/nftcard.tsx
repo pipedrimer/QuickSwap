@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { Check, Info } from "lucide-react"
-
+import { Button } from "./button"
 import { Card, CardContent, CardFooter } from "../component/card"
 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../component/tooltip"
@@ -27,40 +27,39 @@ export function NFTCard({ nft, selected, onSelect }: NFTCardProps) {
   const [isHovering, setIsHovering] = useState(false)
 
   return (
-    <Card
-      className={`overflow-hidden transition-all duration-200 bg-gray-900 border-gray-800 hover:border-purple-500/50 ${
+       <Card
+      onClick={onSelect}
+      className={`overflow-hidden transition-all duration-200 bg-gray-900 border border-gray-800 hover:border-purple-500/50 cursor-pointer ${
         selected ? "ring-2 ring-purple-500" : ""
       }`}
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
     >
       <div className="relative">
-        <img src={nft.image || "/placeholder.svg"} alt={nft.name} className="w-full aspect-square object-cover" />
+        {/* Image with hover dim effect */}
+        <img
+          src={nft.image}
+          alt={nft.name}
+          className={`w-full aspect-square object-cover transition-opacity duration-200 ${
+            isHovering ? "opacity-70" : "opacity-100"
+          }`}
+        />
 
         {/* Selection overlay */}
-        <div
-          className={`absolute inset-0 bg-purple-500/10 flex items-center justify-center transition-opacity duration-200 ${
-            selected ? "opacity-100" : "opacity-0"
-          }`}
-        >
-          {selected && (
+        {selected && (
+          <div className="absolute inset-0 bg-purple-500/10 flex items-center justify-center transition-opacity duration-200 opacity-100">
             <div className="h-10 w-10 rounded-full bg-purple-500 flex items-center justify-center">
               <Check className="h-6 w-6 text-white" />
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
-        {/* Action buttons overlay */}
-        <div
-          className={`absolute inset-0 bg-black/60 flex items-center justify-center transition-opacity duration-200 ${
-            isHovering && !selected ? "opacity-100" : "opacity-0"
-          }`}
-        >
-          <button onClick={onSelect} className="bg-purple-600 hover:bg-purple-700 text-white">
-            Select for Trade
-          </button>
-        </div>
+        {/* Hover overlay (black) */}
+        {isHovering && !selected && (
+          <div className="absolute inset-0 bg-black/40 transition-opacity duration-200"></div>
+        )}
       </div>
+
 
       <CardContent className="p-4">
         <div className="flex justify-between items-start mb-1">
