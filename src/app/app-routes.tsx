@@ -1,12 +1,12 @@
 import { LandingPage } from '@/pages/landingpage'
-import { Trade } from '@/pages/trade'
 import { Routes, Route} from 'react-router'
+import TradePage from '@/pages/trade'
 
 export function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
-      <Route path="/trade" element={<Trade />} />
+      <Route path="/trade" element={<TradePage />} />
       <Route path="*" element={<LandingPage />} />
     </Routes>
   )
